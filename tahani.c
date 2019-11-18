@@ -9,11 +9,11 @@
 
 
 typedef struct {
-    leveldb_t* handle;
-    leveldb_options_t* options;
-    leveldb_readoptions_t* readoptions;
-    leveldb_writeoptions_t* writeoptions;
-    int flags;
+  leveldb_t* handle;
+  leveldb_options_t* options;
+  leveldb_readoptions_t* readoptions;
+  leveldb_writeoptions_t* writeoptions;
+  int flags;
 } Db;
 
 /* Close a db, noop if already closed */
@@ -70,9 +70,8 @@ static Db* initdb(leveldb_t *conn, leveldb_options_t *options) {
 static Janet cfun_open(int32_t argc, Janet *argv) {
   janet_fixarity(argc, 1);
   const char *name = janet_getcstring(argv, 0);
-  leveldb_options_t *options;
+  leveldb_options_t *options = leveldb_options_create();
   null_err;
-  options = leveldb_options_create();
   leveldb_options_set_create_if_missing(options, 1);
   leveldb_t *conn = leveldb_open(options, name, &err);
  
@@ -123,11 +122,37 @@ static Janet cfun_get(int32_t argc, Janet *argv) {
   }
 }
 
+static Janet cfun_destroy(int32_t argc, Janet *argv) {
+  janet_fixarity(argc, 1);
+  const char *name = janet_getcstring(argv, 0);
+  null_err;
+
+  leveldb_options_t *options = leveldb_options_create();
+  leveldb_destroy_db(options, name, &err);
+  paniconerr(err);
+
+  return janet_wrap_nil();
+}
+
+static Janet cfun_repair(int32_t argc, Janet *argv) {
+  janet_fixarity(argc, 1);
+  const char *name = janet_getcstring(argv, 0);
+  null_err;
+
+  leveldb_options_t *options = leveldb_options_create();
+  leveldb_repair_db(options, name, &err);
+  paniconerr(err);
+
+  return janet_wrap_nil();
+}
+
 static const JanetReg cfuns[] = {
     {"open", cfun_open, "(tahani/open name)\n\nOpens a level DB connection with the name. A name must be a string"},
-    {"close", cfun_close, "(tahani/close db)\n\nCloses a level DB connection. A db must be a tahani/db"},
+    {"close", cfun_close, "(tahani/close db)\n\nCloses a level DB connection. A db must be a tahani/db."},
     {"put", cfun_put, "(tahani/put db key val)\n\nPut the val under the key. A db must be a tahani/db, key and val must be a string"},
     {"get", cfun_get, "(tahani/get db key)\n\nGet val under the key. A key must be a string"},
+    {"destroy", cfun_destroy, "(tahani/destroy db)\n\nDestroy the level DB with the name. A name must be a string."},
+    {"repair", cfun_repair, "(tahani/repair db)\n\nDestroy the level DB with the name. A name must be a string."},
     {NULL, NULL, NULL}
 };
 
