@@ -10,7 +10,7 @@ You can run test with `janet test.janet`
 
 ## TODOs
 
-- [ ] @todo add error checks
 - [ ] @todo add management functions
 - [ ] @todo add iterator functions
 - [ ] @todo add batch functions
+- [x] add error checks

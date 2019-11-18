@@ -50,6 +50,13 @@ static void free_err(char *err) {
   leveldb_free(err); err = NULL;
 }
 
+static void paniconerr(char *err) {
+  if (err != NULL) {
+    janet_panic(err);
+  } else {
+    free_err(err);
+  }
+}
 static Db* initdb(leveldb_t *conn, leveldb_options_t *options) {
   Db* db = (Db *) janet_abstract(&AT_db, sizeof(Db));
   db->handle = conn;
@@ -70,7 +77,8 @@ static Janet cfun_open(int32_t argc, Janet *argv) {
   leveldb_t *conn = leveldb_open(options, name, &err);
  
   Db *db = initdb(conn, options);
-  free_err(err);
+  paniconerr(err);
+
   return janet_wrap_abstract(db);
 }
 
@@ -91,7 +99,8 @@ static Janet cfun_put(int32_t argc, Janet *argv) {
   null_err;
 
   leveldb_put(db->handle, db->writeoptions, key, keylen, val, vallen, &err);
-  free_err(err);
+  paniconerr(err);
+
   return janet_wrap_nil();
 }
 
@@ -105,7 +114,7 @@ static Janet cfun_get(int32_t argc, Janet *argv) {
   null_err;
 
   val = leveldb_get(db->handle, db->readoptions, key, keylen, &vallen, &err);
-  free_err(err);
+  paniconerr(err);
 
   if (val == NULL) {
     return janet_wrap_nil();
@@ -115,10 +124,10 @@ static Janet cfun_get(int32_t argc, Janet *argv) {
 }
 
 static const JanetReg cfuns[] = {
-    {"open", cfun_open, "(tahani/open name)\n\nOpens level DB connection with name."},
-    {"close", cfun_close, "(tahani/close db)\n\nCloses level DB connection."},
-    {"put", cfun_put, "(tahani/put db key val)\n\nPut val under key."},
-    {"get", cfun_get, "(tahani/get db key val)\n\nGet val under key."},
+    {"open", cfun_open, "(tahani/open name)\n\nOpens a level DB connection with the name. A name must be a string"},
+    {"close", cfun_close, "(tahani/close db)\n\nCloses a level DB connection. A db must be a tahani/db"},
+    {"put", cfun_put, "(tahani/put db key val)\n\nPut the val under the key. A db must be a tahani/db, key and val must be a string"},
+    {"get", cfun_get, "(tahani/get db key)\n\nGet val under the key. A key must be a string"},
     {NULL, NULL, NULL}
 };
 
