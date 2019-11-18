@@ -118,8 +118,21 @@ static Janet cfun_get(int32_t argc, Janet *argv) {
   if (val == NULL) {
     return janet_wrap_nil();
   } else {
-    return janet_cstringv(val);
+    return janet_stringv((uint8_t *) val, vallen);
   }
+}
+
+static Janet cfun_delete(int32_t argc, Janet *argv) {
+  janet_fixarity(argc, 2);
+  Db *db = janet_getabstract(argv, 0, &AT_db);
+  const char *key = janet_getcstring(argv, 1);
+  size_t keylen = strlen(key);
+  null_err;
+
+  leveldb_delete(db->handle, db->writeoptions, key, keylen, &err);
+  paniconerr(err);
+
+  return janet_wrap_nil();
 }
 
 static Janet cfun_destroy(int32_t argc, Janet *argv) {
@@ -151,6 +164,7 @@ static const JanetReg cfuns[] = {
     {"close", cfun_close, "(tahani/close db)\n\nCloses a level DB connection. A db must be a tahani/db."},
     {"put", cfun_put, "(tahani/put db key val)\n\nPut the val under the key. A db must be a tahani/db, key and val must be a string"},
     {"get", cfun_get, "(tahani/get db key)\n\nGet val under the key. A key must be a string"},
+    {"delete", cfun_delete, "(tahani/delete db key)\n\nGet val under the key. A key must be a string"},
     {"destroy", cfun_destroy, "(tahani/destroy db)\n\nDestroy the level DB with the name. A name must be a string."},
     {"repair", cfun_repair, "(tahani/repair db)\n\nDestroy the level DB with the name. A name must be a string."},
     {NULL, NULL, NULL}

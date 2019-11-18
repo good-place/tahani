@@ -13,5 +13,6 @@ You can run test with `janet test.janet`
 - [ ] @todo add open, read and write optional options
 - [ ] @todo add iterator functions
 - [ ] @todo add batch functions
+- [x] add delete function
 - [x] add management functions
 - [x] add error checks
