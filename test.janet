@@ -1,10 +1,14 @@
 (import build/tahani :as t)  (def d (t/open "testdb"))
 
-(t/put d "yummy" "baba ghamoush")
+(loop [i :range [0 100000]]
+ (t/put d (string "yummy" i) (string "baba ghamoush" i)))
 
 (print "---------------------------")
 
-(print "Janet: " (t/get d "yummy"))
+(loop [i :range [0 100000]]
+ (t/get d (string "yummy" i)))
+
+(print "Janet: " (t/get d "yummy999"))
 
 (print "Janet: " (t/get d "nil"))
 
