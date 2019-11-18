@@ -10,6 +10,7 @@ You can run test with `janet test.janet`
 
 ## TODOs
 
+- [ ] @todo add marshaling/unmarshaling put/get functions
 - [ ] @todo add open, read and write optional options
 - [ ] @todo add iterator functions
 - [ ] @todo add batch functions
