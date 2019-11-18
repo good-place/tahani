@@ -5,15 +5,15 @@
 
 #define FLAG_CLOSED 1
 #define MSG_DB_CLOSED "database already closed"
-#define null_err char *err = NULL 
+#define null_err char *err = NULL
 
 
 typedef struct {
-  leveldb_t* handle;
-  leveldb_options_t* options;
-  leveldb_readoptions_t* readoptions;
-  leveldb_writeoptions_t* writeoptions;
-  int flags;
+    leveldb_t* handle;
+    leveldb_options_t* options;
+    leveldb_readoptions_t* readoptions;
+    leveldb_writeoptions_t* writeoptions;
+    int flags;
 } Db;
 
 /* Close a db, noop if already closed */
@@ -47,116 +47,117 @@ static const JanetAbstractType AT_db = {
 };
 
 static void free_err(char *err) {
-  leveldb_free(err); err = NULL;
+    leveldb_free(err);
+    err = NULL;
 }
 
 static void paniconerr(char *err) {
-  if (err != NULL) {
-    janet_panic(err);
-  } else {
-    free_err(err);
-  }
+    if (err != NULL) {
+        janet_panic(err);
+    } else {
+        free_err(err);
+    }
 }
 static Db* initdb(leveldb_t *conn, leveldb_options_t *options) {
-  Db* db = (Db *) janet_abstract(&AT_db, sizeof(Db));
-  db->handle = conn;
-  db->options = options;
-  db->readoptions = leveldb_readoptions_create();
-  db->writeoptions = leveldb_writeoptions_create();
-  db->flags = 0;
-  return db;
+    Db* db = (Db *) janet_abstract(&AT_db, sizeof(Db));
+    db->handle = conn;
+    db->options = options;
+    db->readoptions = leveldb_readoptions_create();
+    db->writeoptions = leveldb_writeoptions_create();
+    db->flags = 0;
+    return db;
 }
 
 static Janet cfun_open(int32_t argc, Janet *argv) {
-  janet_fixarity(argc, 1);
-  const char *name = janet_getcstring(argv, 0);
-  leveldb_options_t *options = leveldb_options_create();
-  null_err;
-  leveldb_options_set_create_if_missing(options, 1);
-  leveldb_t *conn = leveldb_open(options, name, &err);
- 
-  Db *db = initdb(conn, options);
-  paniconerr(err);
+    janet_fixarity(argc, 1);
+    const char *name = janet_getcstring(argv, 0);
+    leveldb_options_t *options = leveldb_options_create();
+    null_err;
+    leveldb_options_set_create_if_missing(options, 1);
+    leveldb_t *conn = leveldb_open(options, name, &err);
 
-  return janet_wrap_abstract(db);
+    Db *db = initdb(conn, options);
+    paniconerr(err);
+
+    return janet_wrap_abstract(db);
 }
 
 static Janet cfun_close(int32_t argc, Janet *argv) {
-  janet_fixarity(argc, 1);
-  Db *db = janet_getabstract(argv, 0, &AT_db);
-  closedb(db);
-  return janet_wrap_nil();
+    janet_fixarity(argc, 1);
+    Db *db = janet_getabstract(argv, 0, &AT_db);
+    closedb(db);
+    return janet_wrap_nil();
 }
 
 static Janet cfun_put(int32_t argc, Janet *argv) {
-  janet_fixarity(argc, 3);
-  Db *db = janet_getabstract(argv, 0, &AT_db);
-  const char *key = janet_getcstring(argv, 1);
-  size_t keylen = strlen(key);
-  const char *val = janet_getcstring(argv, 2);
-  size_t vallen = strlen(val);
-  null_err;
+    janet_fixarity(argc, 3);
+    Db *db = janet_getabstract(argv, 0, &AT_db);
+    const char *key = janet_getcstring(argv, 1);
+    size_t keylen = strlen(key);
+    const char *val = janet_getcstring(argv, 2);
+    size_t vallen = strlen(val);
+    null_err;
 
-  leveldb_put(db->handle, db->writeoptions, key, keylen, val, vallen, &err);
-  paniconerr(err);
+    leveldb_put(db->handle, db->writeoptions, key, keylen, val, vallen, &err);
+    paniconerr(err);
 
-  return janet_wrap_nil();
+    return janet_wrap_nil();
 }
 
 static Janet cfun_get(int32_t argc, Janet *argv) {
-  janet_fixarity(argc, 2);
-  Db *db = janet_getabstract(argv, 0, &AT_db);
-  const char *key = janet_getcstring(argv, 1);
-  size_t keylen = strlen(key);
-  const char* val;
-  size_t vallen;
-  null_err;
+    janet_fixarity(argc, 2);
+    Db *db = janet_getabstract(argv, 0, &AT_db);
+    const char *key = janet_getcstring(argv, 1);
+    size_t keylen = strlen(key);
+    const char* val;
+    size_t vallen;
+    null_err;
 
-  val = leveldb_get(db->handle, db->readoptions, key, keylen, &vallen, &err);
-  paniconerr(err);
+    val = leveldb_get(db->handle, db->readoptions, key, keylen, &vallen, &err);
+    paniconerr(err);
 
-  if (val == NULL) {
-    return janet_wrap_nil();
-  } else {
-    return janet_stringv((uint8_t *) val, vallen);
-  }
+    if (val == NULL) {
+        return janet_wrap_nil();
+    } else {
+        return janet_stringv((uint8_t *) val, vallen);
+    }
 }
 
 static Janet cfun_delete(int32_t argc, Janet *argv) {
-  janet_fixarity(argc, 2);
-  Db *db = janet_getabstract(argv, 0, &AT_db);
-  const char *key = janet_getcstring(argv, 1);
-  size_t keylen = strlen(key);
-  null_err;
+    janet_fixarity(argc, 2);
+    Db *db = janet_getabstract(argv, 0, &AT_db);
+    const char *key = janet_getcstring(argv, 1);
+    size_t keylen = strlen(key);
+    null_err;
 
-  leveldb_delete(db->handle, db->writeoptions, key, keylen, &err);
-  paniconerr(err);
+    leveldb_delete(db->handle, db->writeoptions, key, keylen, &err);
+    paniconerr(err);
 
-  return janet_wrap_nil();
+    return janet_wrap_nil();
 }
 
 static Janet cfun_destroy(int32_t argc, Janet *argv) {
-  janet_fixarity(argc, 1);
-  const char *name = janet_getcstring(argv, 0);
-  null_err;
+    janet_fixarity(argc, 1);
+    const char *name = janet_getcstring(argv, 0);
+    null_err;
 
-  leveldb_options_t *options = leveldb_options_create();
-  leveldb_destroy_db(options, name, &err);
-  paniconerr(err);
+    leveldb_options_t *options = leveldb_options_create();
+    leveldb_destroy_db(options, name, &err);
+    paniconerr(err);
 
-  return janet_wrap_nil();
+    return janet_wrap_nil();
 }
 
 static Janet cfun_repair(int32_t argc, Janet *argv) {
-  janet_fixarity(argc, 1);
-  const char *name = janet_getcstring(argv, 0);
-  null_err;
+    janet_fixarity(argc, 1);
+    const char *name = janet_getcstring(argv, 0);
+    null_err;
 
-  leveldb_options_t *options = leveldb_options_create();
-  leveldb_repair_db(options, name, &err);
-  paniconerr(err);
+    leveldb_options_t *options = leveldb_options_create();
+    leveldb_repair_db(options, name, &err);
+    paniconerr(err);
 
-  return janet_wrap_nil();
+    return janet_wrap_nil();
 }
 
 static const JanetReg cfuns[] = {
