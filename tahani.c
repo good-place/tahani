@@ -163,17 +163,21 @@ static Janet cfun_repair(int32_t argc, Janet *argv) {
     return janet_wrap_nil();
 }
 
-static const JanetReg cfuns[] = {
+static const JanetReg core_cfuns[] = {
     {"open", cfun_open, "(tahani/open name)\n\nOpens a level DB connection with the name. A name must be a string"},
     {"close", cfun_close, "(tahani/close db)\n\nCloses a level DB connection. A db must be a tahani/db."},
-    {"put", cfun_put, "(tahani/put db key val)\n\nPut the val under the key. A db must be a tahani/db, key and val must be a string"},
-    {"get", cfun_get, "(tahani/get db key)\n\nGet val under the key. A key must be a string"},
-    {"delete", cfun_delete, "(tahani/delete db key)\n\nGet val under the key. A key must be a string"},
     {"destroy", cfun_destroy, "(tahani/destroy db)\n\nDestroy the level DB with the name. A name must be a string."},
     {"repair", cfun_repair, "(tahani/repair db)\n\nDestroy the level DB with the name. A name must be a string."},
     {NULL, NULL, NULL}
 };
 
+static const JanetReg record_cfuns[] = {
+    {"put", cfun_put, "(tahani/record/put db key val)\n\nPut the val under the key. A db must be a tahani/db, key and val must be a string"},
+    {"get", cfun_get, "(tahani/record/get db key)\n\nGet val under the key. A key must be a string"},
+    {"delete", cfun_delete, "(tahani/record/delete db key)\n\nGet val under the key. A key must be a string"},
+};
+
 JANET_MODULE_ENTRY(JanetTable *env) {
-    janet_cfuns(env, "tahani", cfuns);
+    janet_cfuns(env, "tahani", core_cfuns);
+    janet_cfuns(env, "tahani/record", record_cfuns);
 }
