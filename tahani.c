@@ -3,12 +3,14 @@
 
 #include "leveldb/include/leveldb/c.h"
 
+#define FLAG_OPENED 0
 #define FLAG_CLOSED 1
 #define MSG_DB_CLOSED "database already closed"
 #define null_err char *err = NULL
 
 
 typedef struct {
+    const char *name;
     leveldb_t* handle;
     leveldb_options_t* options;
     leveldb_readoptions_t* readoptions;
@@ -58,13 +60,14 @@ static void paniconerr(char *err) {
         free_err(err);
     }
 }
-static Db* initdb(leveldb_t *conn, leveldb_options_t *options) {
+static Db* initdb(const char *name, leveldb_t *conn, leveldb_options_t *options) {
     Db* db = (Db *) janet_abstract(&AT_db, sizeof(Db));
+    db->name = name;
     db->handle = conn;
     db->options = options;
     db->readoptions = leveldb_readoptions_create();
     db->writeoptions = leveldb_writeoptions_create();
-    db->flags = 0;
+    db->flags = FLAG_OPENED;
     return db;
 }
 
@@ -76,7 +79,7 @@ static Janet cfun_open(int32_t argc, Janet *argv) {
     leveldb_options_set_create_if_missing(options, 1);
     leveldb_t *conn = leveldb_open(options, name, &err);
 
-    Db *db = initdb(conn, options);
+    Db *db = initdb(name, conn, options);
     paniconerr(err);
 
     return janet_wrap_abstract(db);
