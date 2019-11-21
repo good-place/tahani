@@ -26,6 +26,7 @@ static void closedb(Db *db) {
         leveldb_readoptions_destroy(db->readoptions);
         leveldb_writeoptions_destroy(db->writeoptions);
         leveldb_close(db->handle);
+        leveldb_free(db->handle);
     }
 }
 
@@ -56,9 +57,8 @@ static void free_err(char *err) {
 static void paniconerr(char *err) {
     if (err != NULL) {
         janet_panic(err);
-    } else {
-        free_err(err);
     }
+    free_err(err);
 }
 static Db* initdb(const char *name, leveldb_t *conn, leveldb_options_t *options) {
     Db* db = (Db *) janet_abstract(&AT_db, sizeof(Db));
