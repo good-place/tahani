@@ -175,6 +175,7 @@ static const JanetReg record_cfuns[] = {
     {"put", cfun_put, "(tahani/record/put db key val)\n\nPut the val under the key. A db must be a tahani/db, key and val must be a string"},
     {"get", cfun_get, "(tahani/record/get db key)\n\nGet val under the key. A key must be a string"},
     {"delete", cfun_delete, "(tahani/record/delete db key)\n\nGet val under the key. A key must be a string"},
+    {NULL, NULL, NULL}
 };
 
 JANET_MODULE_ENTRY(JanetTable *env) {
