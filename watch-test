@@ -1,0 +1,4 @@
+#!/bin/sh
+
+fd "(janet)|(c)" . | entr -s "jpm build && janet test.janet"
+

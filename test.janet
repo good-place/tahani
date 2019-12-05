@@ -4,7 +4,7 @@
 
 (def d (t/open db-name))
 
-(def reqs 1_000_000)
+(def reqs 1_000)
 
 (loop [i :range [0 reqs]]
  (t/record/put d (string "yummy" i) (string "baba ghamoush" i)))
@@ -15,6 +15,10 @@
 (print "899th yummy is: " (t/record/get d "yummy899"))
 
 (print "99999th yummy is eaten: " (t/record/get d "yummy999999"))
+
+(def b (t/batch/create))
+
+(t/batch/destroy b)
 
 (t/close d)
 

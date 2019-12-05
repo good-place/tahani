@@ -5,7 +5,8 @@
 
 #define FLAG_OPENED 0
 #define FLAG_CLOSED 1
-#define MSG_DB_CLOSED "database already closed"
+#define FLAG_CREATED 2
+#define FLAG_DESTROYED 3
 #define null_err char *err = NULL
 
 
@@ -18,6 +19,11 @@ typedef struct {
     int flags;
 } Db;
 
+typedef struct {
+    leveldb_writebatch_t* handle;
+    int flags;
+} Batch;
+
 /* Close a db, noop if already closed */
 static void closedb(Db *db) {
     if (!(db->flags & FLAG_CLOSED)) {
@@ -29,17 +35,42 @@ static void closedb(Db *db) {
     }
 }
 
-/* Called to garbage collect a sqlite3 connection */
-static int gcleveldb(void *p, size_t s) {
+static void destroybatch(Batch *batch) {
+    if (!(batch->flags & FLAG_DESTROYED)) {
+        batch->flags |= FLAG_DESTROYED;
+        leveldb_writebatch_clear(batch->handle);
+        leveldb_writebatch_destroy(batch->handle);
+    }
+}
+
+static int gcdb(void *p, size_t s) {
     (void) s;
     Db *db = (Db *)p;
     closedb(db);
     return 0;
 }
 
+static int gcbatch(void *p, size_t s) {
+    (void) s;
+    Batch *b = (Batch *) p;
+    destroybatch(b);
+    return 0;
+}
+
 static const JanetAbstractType AT_db = {
     "tahani/db",
-    gcleveldb,
+    gcdb,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
+
+static const JanetAbstractType AT_batch = {
+    "tahani/batch",
+    gcbatch,
     NULL,
     NULL,
     NULL,
@@ -56,10 +87,10 @@ static void free_err(char *err) {
 static void paniconerr(char *err) {
     if (err != NULL) {
         janet_panic(err);
-    } else {
-        free_err(err);
     }
+    free_err(err);
 }
+
 static Db* initdb(const char *name, leveldb_t *conn, leveldb_options_t *options) {
     Db* db = (Db *) janet_abstract(&AT_db, sizeof(Db));
     db->name = name;
@@ -69,6 +100,13 @@ static Db* initdb(const char *name, leveldb_t *conn, leveldb_options_t *options)
     db->writeoptions = leveldb_writeoptions_create();
     db->flags = FLAG_OPENED;
     return db;
+}
+
+static Batch* initbatch(leveldb_writebatch_t *wb) {
+    Batch* batch = (Batch *) janet_abstract(&AT_batch, sizeof(Batch));
+    batch->handle = wb;
+    batch->flags = FLAG_CREATED;
+    return batch;
 }
 
 static Janet cfun_open(int32_t argc, Janet *argv) {
@@ -92,7 +130,7 @@ static Janet cfun_close(int32_t argc, Janet *argv) {
     return janet_wrap_nil();
 }
 
-static Janet cfun_put(int32_t argc, Janet *argv) {
+static Janet cfun_record_put(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 3);
     Db *db = janet_getabstract(argv, 0, &AT_db);
     const char *key = janet_getcstring(argv, 1);
@@ -107,7 +145,7 @@ static Janet cfun_put(int32_t argc, Janet *argv) {
     return janet_wrap_nil();
 }
 
-static Janet cfun_get(int32_t argc, Janet *argv) {
+static Janet cfun_record_get(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 2);
     Db *db = janet_getabstract(argv, 0, &AT_db);
     const char *key = janet_getcstring(argv, 1);
@@ -126,7 +164,7 @@ static Janet cfun_get(int32_t argc, Janet *argv) {
     }
 }
 
-static Janet cfun_delete(int32_t argc, Janet *argv) {
+static Janet cfun_record_delete(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 2);
     Db *db = janet_getabstract(argv, 0, &AT_db);
     const char *key = janet_getcstring(argv, 1);
@@ -163,6 +201,23 @@ static Janet cfun_repair(int32_t argc, Janet *argv) {
     return janet_wrap_nil();
 }
 
+static Janet cfun_create_batch(int32_t argc, Janet *argv) {
+    (void) argv;
+    janet_fixarity(argc, 0);
+    leveldb_writebatch_t *wb = leveldb_writebatch_create();
+    Batch *batch = initbatch(wb);
+
+    return janet_wrap_abstract(batch);
+}
+
+static Janet cfun_destroy_batch(int32_t argc, Janet *argv) {
+    janet_fixarity(argc, 1);
+    Batch *batch = janet_getabstract(argv, 0, &AT_batch);
+
+    destroybatch(batch);
+    return janet_wrap_nil();
+}
+
 static const JanetReg db_cfuns[] = {
     {"open", cfun_open, "(tahani/open name)\n\nOpens a level DB connection with the name. A name must be a string"},
     {"close", cfun_close, "(tahani/close db)\n\nCloses a level DB connection. A db must be a tahani/db."},
@@ -170,9 +225,15 @@ static const JanetReg db_cfuns[] = {
 };
 
 static const JanetReg record_cfuns[] = {
-    {"record/put", cfun_put, "(tahani/record/put db key val)\n\nPut the val under the key. A db must be a tahani/db, key and val must be a string"},
-    {"record/get", cfun_get, "(tahani/record/get db key)\n\nGet val under the key. A key must be a string"},
-    {"record/delete", cfun_delete, "(tahani/record/delete db key)\n\nGet val under the key. A key must be a string"},
+    {"record/put", cfun_record_put, "(tahani/record/put db key val)\n\nPut the val under the key. A db must be a tahani/db, key and val must be a string"},
+    {"record/get", cfun_record_get, "(tahani/record/get db key)\n\nGet val under the key. A key must be a string"},
+    {"record/delete", cfun_record_delete, "(tahani/record/delete db key)\n\nGet val under the key. A key must be a string"},
+    {NULL, NULL, NULL}
+};
+
+static const JanetReg batch_cfuns[] = {
+    {"batch/create", cfun_create_batch, "(tahani/batch/create)\n\nCreate batch to which you can add operations."},
+    {"batch/destroy", cfun_destroy_batch, "(tahani/batch/destroy batch)\n\nDestroy batch."},
     {NULL, NULL, NULL}
 };
 
@@ -185,5 +246,6 @@ static const JanetReg manage_cfuns[] = {
 JANET_MODULE_ENTRY(JanetTable *env) {
     janet_cfuns(env, "tahani", db_cfuns);
     janet_cfuns(env, "tahani", record_cfuns);
+    janet_cfuns(env, "tahani", batch_cfuns);
     janet_cfuns(env, "tahani", manage_cfuns);
 }
