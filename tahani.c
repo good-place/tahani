@@ -21,6 +21,7 @@ typedef struct {
 
 typedef struct {
     leveldb_writebatch_t* handle;
+    leveldb_writeoptions_t* writeoptions;    
     int flags;
 } Batch;
 
@@ -40,6 +41,7 @@ static void destroybatch(Batch *batch) {
         batch->flags |= FLAG_DESTROYED;
         leveldb_writebatch_clear(batch->handle);
         leveldb_writebatch_destroy(batch->handle);
+        leveldb_writeoptions_destroy(batch->writeoptions);
     }
 }
 
@@ -105,6 +107,7 @@ static Db* initdb(const char *name, leveldb_t *conn, leveldb_options_t *options)
 static Batch* initbatch(leveldb_writebatch_t *wb) {
     Batch* batch = (Batch *) janet_abstract(&AT_batch, sizeof(Batch));
     batch->handle = wb;
+    batch->writeoptions = leveldb_writeoptions_create();    
     batch->flags = FLAG_CREATED;
     return batch;
 }
@@ -201,7 +204,7 @@ static Janet cfun_repair(int32_t argc, Janet *argv) {
     return janet_wrap_nil();
 }
 
-static Janet cfun_create_batch(int32_t argc, Janet *argv) {
+static Janet cfun_batch_create(int32_t argc, Janet *argv) {
     (void) argv;
     janet_fixarity(argc, 0);
     leveldb_writebatch_t *wb = leveldb_writebatch_create();
@@ -210,7 +213,7 @@ static Janet cfun_create_batch(int32_t argc, Janet *argv) {
     return janet_wrap_abstract(batch);
 }
 
-static Janet cfun_destroy_batch(int32_t argc, Janet *argv) {
+static Janet cfun_batch_destroy(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 1);
     Batch *batch = janet_getabstract(argv, 0, &AT_batch);
 
@@ -232,8 +235,8 @@ static const JanetReg record_cfuns[] = {
 };
 
 static const JanetReg batch_cfuns[] = {
-    {"batch/create", cfun_create_batch, "(tahani/batch/create)\n\nCreate batch to which you can add operations."},
-    {"batch/destroy", cfun_destroy_batch, "(tahani/batch/destroy batch)\n\nDestroy batch."},
+    {"batch/create", cfun_batch_create, "(tahani/batch/create)\n\nCreate batch to which you can add operations."},
+    {"batch/destroy", cfun_batch_destroy, "(tahani/batch/destroy batch)\n\nDestroy batch."},
     {NULL, NULL, NULL}
 };
 
