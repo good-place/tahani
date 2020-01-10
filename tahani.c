@@ -201,7 +201,7 @@ static Janet cfun_repair(int32_t argc, Janet *argv) {
     return janet_wrap_nil();
 }
 
-static Janet cfun_create_batch(int32_t argc, Janet *argv) {
+static Janet cfun_batch_create(int32_t argc, Janet *argv) {
     (void) argv;
     janet_fixarity(argc, 0);
     leveldb_writebatch_t *wb = leveldb_writebatch_create();
@@ -210,11 +210,50 @@ static Janet cfun_create_batch(int32_t argc, Janet *argv) {
     return janet_wrap_abstract(batch);
 }
 
-static Janet cfun_destroy_batch(int32_t argc, Janet *argv) {
+static Janet cfun_batch_destroy(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 1);
     Batch *batch = janet_getabstract(argv, 0, &AT_batch);
 
     destroybatch(batch);
+    return janet_wrap_nil();
+}
+
+static Janet cfun_batch_write(int32_t argc, Janet *argv) {
+	  janet_fixarity(argc, 2);
+    Db *db = janet_getabstract(argv, 0, &AT_db);
+    Batch *batch = janet_getabstract(argv, 1, &AT_batch); 
+    null_err;
+    leveldb_write(db->handle, db->writeoptions, batch->handle, &err);
+    paniconerr(err);
+    
+    return janet_wrap_nil();
+}
+
+static Janet cfun_batch_put(int32_t argc, Janet *argv) {
+    janet_fixarity(argc, 3);
+    Batch *batch = janet_getabstract(argv, 0, &AT_batch);
+    const char *key = janet_getcstring(argv, 1);
+    size_t keylen = strlen(key);
+    const char *val = janet_getcstring(argv, 2);
+    size_t vallen = strlen(val);
+    null_err;
+
+    leveldb_writebatch_put(batch->handle, key, keylen, val, vallen);
+    paniconerr(err);
+    
+    return janet_wrap_nil();
+}
+
+static Janet cfun_batch_delete(int32_t argc, Janet *argv) {
+    janet_fixarity(argc, 2);
+    Batch *batch = janet_getabstract(argv, 0, &AT_batch);
+    const char *key = janet_getcstring(argv, 1);
+    size_t keylen = strlen(key);
+    null_err;
+
+    leveldb_writebatch_delete(batch->handle, key, keylen);
+    paniconerr(err);
+    
     return janet_wrap_nil();
 }
 
@@ -225,15 +264,18 @@ static const JanetReg db_cfuns[] = {
 };
 
 static const JanetReg record_cfuns[] = {
-    {"record/put", cfun_record_put, "(tahani/record/put db key val)\n\nPut the val under the key. A db must be a tahani/db, key and val must be a string"},
+    {"record/put", cfun_record_put, "(tahani/record/put db key value)\n\nPut the valur under the key. A db must be a tahani/db, key and value must be a string"},
     {"record/get", cfun_record_get, "(tahani/record/get db key)\n\nGet val under the key. A key must be a string"},
     {"record/delete", cfun_record_delete, "(tahani/record/delete db key)\n\nGet val under the key. A key must be a string"},
     {NULL, NULL, NULL}
 };
 
 static const JanetReg batch_cfuns[] = {
-    {"batch/create", cfun_create_batch, "(tahani/batch/create)\n\nCreate batch to which you can add operations."},
-    {"batch/destroy", cfun_destroy_batch, "(tahani/batch/destroy batch)\n\nDestroy batch."},
+    {"batch/create", cfun_batch_create, "(tahani/batch/create)\n\nCreate batch to which you can add operations."},
+    {"batch/destroy", cfun_batch_destroy, "(tahani/batch/destroy batch)\n\nDestroy batch."},
+    {"batch/write", cfun_batch_write, "(tahani/batch/write db batch)\n\nWrite batch do db."},
+    {"batch/put", cfun_batch_put, "(tahani/batch/put batch key value)\n\nAdd put to the batch, key and value must be string"},
+    {"batch/delete", cfun_batch_delete, "(tahani/batch/delete batch key value)\n\nAdd delete to the batch, key and value must be string"},
     {NULL, NULL, NULL}
 };
 
