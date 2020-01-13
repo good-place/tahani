@@ -21,6 +21,7 @@ typedef struct {
 
 typedef struct {
     leveldb_writebatch_t* handle;
+    leveldb_writeoptions_t* writeoptions;    
     int flags;
 } Batch;
 
@@ -40,6 +41,7 @@ static void destroybatch(Batch *batch) {
         batch->flags |= FLAG_DESTROYED;
         leveldb_writebatch_clear(batch->handle);
         leveldb_writebatch_destroy(batch->handle);
+        leveldb_writeoptions_destroy(batch->writeoptions);
     }
 }
 
@@ -105,6 +107,7 @@ static Db* initdb(const char *name, leveldb_t *conn, leveldb_options_t *options)
 static Batch* initbatch(leveldb_writebatch_t *wb) {
     Batch* batch = (Batch *) janet_abstract(&AT_batch, sizeof(Batch));
     batch->handle = wb;
+    batch->writeoptions = leveldb_writeoptions_create();    
     batch->flags = FLAG_CREATED;
     return batch;
 }
