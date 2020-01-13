@@ -80,12 +80,15 @@ static const JanetAbstractType AT_batch = {
 
 static void free_err(char *err) {
     leveldb_free(err);
-    err = NULL;
 }
 
 static void paniconerr(char *err) {
     if (err != NULL) {
-        janet_panic(err);
+	      const int message_len = 24 + strlen(err) + 1;
+	      char message[message_len]; 
+	      sprintf(message, "LevelDB returned error: %s", err);
+	      free_err(err);
+        janet_panic(message);
     }
     free_err(err);
 }
