@@ -4,7 +4,14 @@ Janet wrapper to leveldb C API
 
 ## Usage
 
-For now `open`, `close`, `put` and `get` functions are inplemented.
+The basic `open`, `close`, `put` and `get` operations are inplemented. 
+
+The management `repair` and `destroy` operations are implemented.
+
+The batch `create`, `destroy`, `write` operations are implemented.
+
+The batch `put` and `delete` operations are implemented.
+
 
 You can run test with `janet test.janet`
 
