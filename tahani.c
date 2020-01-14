@@ -56,6 +56,27 @@ static int gcbatch(void *p, size_t s) {
     return 0;
 }
 
+static void printdb(void *p, JanetBuffer *b) {
+    Db *db = (Db *)p;
+    char *state;
+    switch (db->flags) {
+	      case FLAG_OPENED:
+		      state = "opened";
+		      break;
+        case FLAG_CLOSED:
+	        state = "closed";
+	        break;
+        default:
+	        state = "unknown";
+	   }
+    
+    const int32_t buflen = 11 + strlen(db->name) + strlen(state) + 1;
+    char toprint[buflen]; 
+    sprintf(toprint, "<tahani/db name=%s state=%s>", db->name, state);
+
+    janet_buffer_push_cstring(b, toprint);
+}
+
 static const JanetAbstractType AT_db = {
     "tahani/db",
     gcdb,
@@ -64,12 +85,16 @@ static const JanetAbstractType AT_db = {
     NULL,
     NULL,
     NULL,
+    printdb,
+    NULL,
     NULL
 };
 
 static const JanetAbstractType AT_batch = {
     "tahani/batch",
     gcbatch,
+    NULL,
+    NULL,
     NULL,
     NULL,
     NULL,

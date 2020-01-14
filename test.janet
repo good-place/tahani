@@ -12,6 +12,7 @@
  (t/record/delete d (string "yummy" i)))
 (print "899th yummy is: " (t/record/get d "yummy899"))
 (print "99999th yummy is eaten: " (t/record/get d "yummy999999"))
+(print "DB status: " (string d))
 
 # Batch operations
 (print " ===== Batching")
@@ -25,4 +26,5 @@
 
 # Management operations
 (t/close d)
+(print "DB status: " (string d))
 (t/manage/destroy db-name)
