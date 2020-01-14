@@ -78,16 +78,15 @@ static const JanetAbstractType AT_batch = {
     NULL
 };
 
-static void free_err(char *err) {
-    leveldb_free(err);
-    err = NULL;
-}
-
 static void paniconerr(char *err) {
     if (err != NULL) {
-        janet_panic(err);
+	      const int message_len = 24 + strlen(err) + 1;
+	      char message[message_len]; 
+	      sprintf(message, "LevelDB returned error: %s", err);
+        leveldb_free(err);
+        janet_panic(message);
     }
-    free_err(err);
+    leveldb_free(err);
 }
 
 static Db* initdb(const char *name, leveldb_t *conn, leveldb_options_t *options) {
