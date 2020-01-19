@@ -17,10 +17,12 @@ You can run test with `janet test.janet`
 
 ## TODOs
 
-- [ ] @todo add batch functions
+- [ ] @todo make batches chainable
+- [ ] @todo make put get to DB abstract
 - [ ] @todo add open, read and write optional options
 - [ ] @todo add iterator functions
-- [ ] @todo add marshaling/unmarshaling put/get functions
+- [ ] @todo add marshaling/unmarshaling store module
+- [x] add batch functions
 - [x] split to more modules
 - [x] add delete function
 - [x] add management functions
