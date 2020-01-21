@@ -25,6 +25,15 @@
 (print "We have Xmass " (t/record/get d "HOHOHO"))
 (print "899th yummy is eaten by him: " (t/record/get d "yummy899"))
 
+# Big batch
+(print " ====== Big Barching ")
+(def b (t/batch/create))
+(loop [i :range [0 reqs]]
+  (t/batch/put b (string "big" i) (string "Oh so big batch" i))
+  (when (> 10_000 i) (t/batch/delete b (string "yummy" i))))
+(t/batch/write b d)
+
+(print "We have some big batches: " (t/record/get d "big99999"))
 # Management operations
 (t/close d)
 (print "DB status: " (string d))
