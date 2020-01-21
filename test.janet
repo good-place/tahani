@@ -1,4 +1,5 @@
 (import build/tahani :as t)
+(import tahani/store :as ts)
 
 (def db-name "testdb" )
 
@@ -38,3 +39,11 @@
 (t/close d)
 (print "DB status: " (string d))
 (t/manage/destroy db-name)
+
+# Store
+(print " ====== Store ")
+(def s (ts/open "peopletest"))
+(def pid (ts/put s {:name "Pepe"}))
+(prin "pepe from the store: ")
+(pp (ts/get s pid))
+(ts/close s)
