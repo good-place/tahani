@@ -35,12 +35,10 @@
 (def Store
   @{:name nil
     :db nil
-    :index-db nil
     :to-index nil
     :state nil
     :save save
     :load load
-    :hash-context nil
     :search search
     :close close})
 
