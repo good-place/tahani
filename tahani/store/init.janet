@@ -1,17 +1,16 @@
-# @todo jhydro hashing
 (import ../../build/tahani :as t)
 (import jhydro :as j)
 
-(def ctx "tahani01")
+(def ctx "-tahani-")
 
 (defn- make-index [field data]
   (string field "-" (j/util/bin2hex (j/hash/hash 16 (marshal (string data)) ctx))))
 
-# @todo batch
 (defn- save [self data]
   (def md (string (marshal data)))
   (def id (string (j/util/bin2hex (j/hash/hash 16 md ctx))))
-  (t/record/put (self :db) id md)
+  (def batch (t/batch/create))
+  (t/batch/put batch id md)
 
   (when (self :to-index)
     (loop [f :in (self :to-index)]
@@ -19,7 +18,8 @@
             old-index (t/record/get (self :db) mf)
             new-index (if old-index (unmarshal old-index) @[])]
         (array/push new-index id)
-        (t/record/put (self :db) mf (string (marshal new-index))))))
+        (t/batch/put batch mf (string (marshal new-index))))))
+  (t/batch/write batch (self :db))
   id)
 
 (defn- search [self field term]
