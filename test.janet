@@ -27,7 +27,7 @@
 (print "899th yummy is eaten by him: " (t/record/get d "yummy899"))
 
 # Big batch
-(print " ====== Big Barching ")
+(print " ====== Big Batching ")
 (def b (t/batch/create))
 (loop [i :range [0 reqs]]
   (t/batch/put b (string "big" i) (string "Oh so big batch" i))
@@ -42,8 +42,15 @@
 
 # Store
 (print " ====== Store ")
-(def s (ts/open "peopletest"))
-(def pid (ts/put s {:name "Pepe"}))
-(prin "pepe from the store: ")
-(pp (ts/get s pid))
-(ts/close s)
+(def s (ts/create "peopletest" [:name :job]))
+(def pid (:save s {:name "Pepe" :job "Programmer"}))
+(prin "pepe from the store: " pid " - ")
+(pp (:load s pid))
+(:save s {:name "Jose" :job "Programmer"})
+(:save s {:name "Karl" :job "Gardener"})
+(print " === Search by name")
+(pp (:search s :name "Pepe"))
+(print " === Search by job")
+(pp (:search s :job "Programmer"))
+(:close s)
+(t/manage/destroy "peopletest")

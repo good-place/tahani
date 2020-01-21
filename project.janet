@@ -1,6 +1,7 @@
 (declare-project
   :name "tahani"
-  :description "LevelDB wrapper for Janet")
+  :description "LevelDB wrapper for Janet"
+  :dependencies ["https://github.com/janet-lang/jhydro.git"])
 
 (declare-native
  :name "tahani"
