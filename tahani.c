@@ -86,21 +86,12 @@ static const JanetAbstractType AT_db = {
     NULL,
     NULL,
     printdb,
-    NULL,
-    NULL
-};
+    JANET_ATEND_TOSTRING};
 
 static const JanetAbstractType AT_batch = {
     "tahani/batch",
     gcbatch,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+    JANET_ATEND_GC
 };
 
 static void paniconerr(char *err) {
