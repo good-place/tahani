@@ -60,7 +60,7 @@
   (print " == Union")
   (pp (tu/union (:find-all s {:job "Programmer" :name "Pepe"})))
   (print " == Intersection")
-  (pp (tu/intersect (:find-all s {:job "Programmer" :pet "Cat"} :intersect)))
-  (print " == 3 way Intersection ")
-  (pp (tu/intersect (:find-all s {:job "Programmer" :name "Pepe" :pet "Cat"} :intersect))))
+  (pp (tu/intersect (:find-all s {:job "Programmer" :pet "Cat"})))
+  (print " == 3 Sets Intersection ")
+  (pp (tu/intersect (:find-all s {:job "Programmer" :name "Pepe" :pet "Cat"}))))
 
