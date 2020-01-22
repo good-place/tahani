@@ -72,25 +72,31 @@ static void printdb(void *p, JanetBuffer *b) {
 
     const int32_t buflen = 11 + strlen(db->name) + strlen(state) + 1;
     char toprint[buflen];
-    sprintf(toprint, "<tahani/db name=%s state=%s>", db->name, state);
+    sprintf(toprint, "name=%s state=%s", db->name, state);
 
     janet_buffer_push_cstring(b, toprint);
 }
+
+static int dbget(void *p, Janet key, Janet *out);
 
 static const JanetAbstractType AT_db = {
     "tahani/db",
     gcdb,
     NULL,
-    NULL,
+    dbget,
     NULL,
     NULL,
     NULL,
     printdb,
     JANET_ATEND_TOSTRING};
 
+static int batchget(void *p, Janet key, Janet *out);
+
 static const JanetAbstractType AT_batch = {
     "tahani/batch",
     gcbatch,
+    NULL,
+    batchget,
     JANET_ATEND_GC
 };
 
@@ -191,6 +197,21 @@ static Janet cfun_record_delete(int32_t argc, Janet *argv) {
     return janet_wrap_nil();
 }
 
+static JanetMethod db_methods[] = {
+	    {"close", cfun_close},
+      {"get", cfun_record_get},
+      {"put", cfun_record_put},
+      {"delete", cfun_record_delete},
+      {NULL, NULL}
+};
+
+static int dbget(void *p, Janet key, Janet *out) {
+	    (void) p;
+      if (!janet_checktype(key, JANET_KEYWORD))
+                return 0;
+      return janet_getmethod(janet_unwrap_keyword(key), db_methods, out);
+}
+
 static Janet cfun_destroy(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 1);
     const char *name = janet_getcstring(argv, 0);
@@ -269,6 +290,21 @@ static Janet cfun_batch_delete(int32_t argc, Janet *argv) {
     paniconerr(err);
 
     return janet_wrap_abstract(batch);
+}
+
+static JanetMethod batch_methods[] = {
+      {"write", cfun_batch_write},
+      {"put", cfun_batch_put},
+      {"delete", cfun_batch_delete},
+      {"destroy", cfun_batch_destroy},
+      {NULL, NULL}
+};
+
+static int batchget(void *p, Janet key, Janet *out) {
+	    (void) p;
+      if (!janet_checktype(key, JANET_KEYWORD))
+                return 0;
+      return janet_getmethod(janet_unwrap_keyword(key), batch_methods, out);
 }
 
 static const JanetReg db_cfuns[] = {

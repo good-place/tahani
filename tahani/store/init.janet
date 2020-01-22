@@ -6,21 +6,24 @@
 (defn- _make-index [self field data]
   (string field "-" (hash2hex data (self :ctx))))
 
+(defn- _open [self]
+  (t/open (self :name)))
+
 (defn- _get [self id]
-  (with [d (t/open (self :name)) t/close] (-?> (t/record/get d id) (unmarshal))))
+  (with [d (:_open self)] (-?> (:get d id) (unmarshal))))
 
 (defn- _write [self batch]
-  (with [d (t/open (self :name)) t/close] (t/batch/write batch d)))
+  (with [d (:_open self)] (:write batch d)))
 
 (defn- save [self data]
   (let [md (freeze (marshal data))
         id (hash2hex md (self :ctx))
         batch (t/batch/create)]
-    (t/batch/put batch id md)
+    (:put batch id md)
     (loop [f :in (self :to-index)
            :let [mf (:_make-index self f (get data f))
                  index (array/push (or (:_get self mf) @[]) id)]]
-     (t/batch/put batch mf (freeze (marshal index))))
+      (:put batch mf (freeze (marshal index))))
     (:_write self batch)
     id))
 
@@ -34,7 +37,7 @@
 
 (def Store
   @{:name nil :to-index nil :ctx "-tahani-"
-    :_make-index _make-index :_get _get :_write _write
+    :_make-index _make-index :_get _get :_write _write :_open _open
     :save save :load load
     :find-by find-by :find-all find-all})
 
