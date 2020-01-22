@@ -1,51 +1,44 @@
 (import ../../build/tahani :as t)
 (import jhydro :as j)
 
-(def ctx "-tahani-")
+(defn hash2hex [data ctx] (freeze (j/util/bin2hex (j/hash/hash 16 data ctx))))
 
-(defn- make-index [field data]
-  (string field "-" (j/util/bin2hex (j/hash/hash 16 (marshal (string data)) ctx))))
+(defn- _make-index [self field data]
+  (string field "-" (hash2hex data (self :ctx))))
+
+(defn- _get [self id]
+  (with [d (t/open (self :name)) t/close] (-?> (t/record/get d id) (unmarshal))))
+
+(defn- _write [self batch]
+  (with [d (t/open (self :name)) t/close] (t/batch/write batch d)))
 
 (defn- save [self data]
-  (def md (string (marshal data)))
-  (def id (string (j/util/bin2hex (j/hash/hash 16 md ctx))))
-  (def batch (t/batch/create))
-  (t/batch/put batch id md)
+  (let [md (freeze (marshal data))
+        id (hash2hex md (self :ctx))
+        batch (t/batch/create)]
+    (t/batch/put batch id md)
+    (loop [f :in (self :to-index)
+           :let [mf (:_make-index self f (get data f))
+                 index (array/push (or (:_get self mf) @[]) id)]]
+     (t/batch/put batch mf (freeze (marshal index))))
+    (:_write self batch)
+    id))
 
-  (when (self :to-index)
-    (loop [f :in (self :to-index)]
-      (let [mf (make-index f (get data f))
-            old-index (t/record/get (self :db) mf)
-            new-index (if old-index (unmarshal old-index) @[])]
-        (array/push new-index id)
-        (t/batch/put batch mf (string (marshal new-index))))))
-  (t/batch/write batch (self :db))
-  id)
+(defn- load [self id] (:_get self id))
 
-(defn- search [self field term]
-  (seq [id :in (unmarshal (t/record/get (self :db) (make-index field term)))]
-    (unmarshal (t/record/get (self :db) id))))
+(defn- find-by [self field term]
+  (seq [id :in (:_get self (:_make-index self field term))] (:_get self id)))
 
-(defn- load [self id]
-  (unmarshal (t/record/get (self :db) id)))
-
-(defn- close [self]
-  (t/close (self :db)))
+(defn- find-all [self query]
+  (seq [[k v] :pairs query] (:find-by self k v)))
 
 (def Store
-  @{:name nil
-    :db nil
-    :to-index nil
-    :state nil
-    :save save
-    :load load
-    :search search
-    :close close})
+  @{:name nil :to-index nil :ctx "-tahani-"
+    :_make-index _make-index :_get _get :_write _write
+    :save save :load load
+    :find-by find-by :find-all find-all})
 
 (defn create [name &opt to-index]
-  (when to-index (assert (tuple? to-index)))
-  (-> @{}
-      (table/setproto Store)
-      (put :name name)
-      (put :db (t/open name))
-      (put :to-index to-index)))
+  (default to-index [])
+  (assert (and (tuple? to-index) (all |(keyword? $) to-index)))
+  (-> @{} (table/setproto Store) (merge-into {:name name :to-index to-index})))
