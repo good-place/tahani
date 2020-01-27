@@ -1,4 +1,4 @@
-(import build/tahani :as t)
+(import ./build/tahani :as t)
 (import ./tahani/store :as ts)
 (import ./tahani/utils :as tu)
 
@@ -50,6 +50,7 @@
   (:save s {:name "Jose" :job "Programmer" :pet "Cat"})
   (:save s {:name "Karl" :job "Gardener" :pet "Dog"})
   (:save s {:name "Pepe" :job "Gardener" :pet "Dog"})
+  (:save s {:name "Joker" :job "Gardener" :pet "" :good-deeds []})
   (print " === Find by name")
   (pp (:find-by s :name "Pepe"))
   (print " === Find by job")

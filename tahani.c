@@ -131,7 +131,7 @@ static Batch* initbatch(leveldb_writebatch_t *wb) {
 
 static Janet cfun_open(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 1);
-    const char *name = janet_getcstring(argv, 0);
+    const char *name = janet_getstring(argv, 0);
     leveldb_options_t *options = leveldb_options_create();
     null_err;
     leveldb_options_set_create_if_missing(options, 1);
@@ -153,10 +153,10 @@ static Janet cfun_close(int32_t argc, Janet *argv) {
 static Janet cfun_record_put(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 3);
     Db *db = janet_getabstract(argv, 0, &AT_db);
-    const char *key = janet_getcstring(argv, 1);
-    size_t keylen = strlen(key);
-    const char *val = janet_getcstring(argv, 2);
-    size_t vallen = strlen(val);
+    const char *key = janet_getstring(argv, 1);
+    size_t keylen = janet_string_length(key);
+    const char *val = janet_getstring(argv, 2);
+    size_t vallen = janet_string_length(val);
     null_err;
 
     leveldb_put(db->handle, db->writeoptions, key, keylen, val, vallen, &err);
@@ -168,8 +168,8 @@ static Janet cfun_record_put(int32_t argc, Janet *argv) {
 static Janet cfun_record_get(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 2);
     Db *db = janet_getabstract(argv, 0, &AT_db);
-    const char *key = janet_getcstring(argv, 1);
-    size_t keylen = strlen(key);
+    const char *key = janet_getstring(argv, 1);
+    size_t keylen = janet_string_length(key);
     const char* val;
     size_t vallen;
     null_err;
@@ -187,8 +187,8 @@ static Janet cfun_record_get(int32_t argc, Janet *argv) {
 static Janet cfun_record_delete(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 2);
     Db *db = janet_getabstract(argv, 0, &AT_db);
-    const char *key = janet_getcstring(argv, 1);
-    size_t keylen = strlen(key);
+    const char *key = janet_getstring(argv, 1);
+    size_t keylen = janet_string_length(key);
     null_err;
 
     leveldb_delete(db->handle, db->writeoptions, key, keylen, &err);
@@ -214,7 +214,7 @@ static int dbget(void *p, Janet key, Janet *out) {
 
 static Janet cfun_destroy(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 1);
-    const char *name = janet_getcstring(argv, 0);
+    const char *name = janet_getstring(argv, 0);
     null_err;
 
     leveldb_options_t *options = leveldb_options_create();
@@ -226,7 +226,7 @@ static Janet cfun_destroy(int32_t argc, Janet *argv) {
 
 static Janet cfun_repair(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 1);
-    const char *name = janet_getcstring(argv, 0);
+    const char *name = janet_getstring(argv, 0);
     null_err;
 
     leveldb_options_t *options = leveldb_options_create();
@@ -267,10 +267,10 @@ static Janet cfun_batch_write(int32_t argc, Janet *argv) {
 static Janet cfun_batch_put(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 3);
     Batch *batch = janet_getabstract(argv, 0, &AT_batch);
-    const char *key = janet_getcstring(argv, 1);
-    size_t keylen = strlen(key);
-    const char *val = janet_getcstring(argv, 2);
-    size_t vallen = strlen(val);
+    const char *key = janet_getstring(argv, 1);
+    size_t keylen = janet_string_length(key);
+    const char *val = janet_getstring(argv, 2);
+    size_t vallen = janet_string_length(val);
     null_err;
 
     leveldb_writebatch_put(batch->handle, key, keylen, val, vallen);
@@ -282,8 +282,8 @@ static Janet cfun_batch_put(int32_t argc, Janet *argv) {
 static Janet cfun_batch_delete(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 2);
     Batch *batch = janet_getabstract(argv, 0, &AT_batch);
-    const char *key = janet_getcstring(argv, 1);
-    size_t keylen = strlen(key);
+    const char *key = janet_getstring(argv, 1);
+    size_t keylen = janet_string_length(key);
     null_err;
 
     leveldb_writebatch_delete(batch->handle, key, keylen);
