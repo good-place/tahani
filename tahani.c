@@ -97,7 +97,7 @@ static const JanetAbstractType AT_batch = {
     gcbatch,
     NULL,
     batchget,
-    JANET_ATEND_GC
+    JANET_ATEND_GET
 };
 
 static void paniconerr(char *err) {

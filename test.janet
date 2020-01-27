@@ -1,6 +1,6 @@
 (import build/tahani :as t)
-(import tahani/store :as ts)
-(import tahani/utils :as tu)
+(import ./tahani/store :as ts)
+(import ./tahani/utils :as tu)
 
 (def db-name "testdb")
 

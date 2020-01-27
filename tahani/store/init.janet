@@ -1,4 +1,4 @@
-(import ../../build/tahani :as t)
+(import tahani :as t)
 (import jhydro :as j)
 
 (defn hash2hex [data ctx] (freeze (j/util/bin2hex (j/hash/hash 16 data ctx))))
@@ -36,10 +36,17 @@
   (seq [[k v] :pairs query] (:find-by self k v)))
 
 (def Store
-  @{:name nil :to-index nil :ctx "-tahani-"
-    :_make-index _make-index :_get _get :_write _write :_open _open
-    :save save :load load
-    :find-by find-by :find-all find-all})
+  @{:name nil
+    :to-index nil
+    :ctx "-tahani-"
+    :_make-index _make-index
+    :_get _get
+    :_write _write
+    :_open _open
+    :save save
+    :load load
+    :find-by find-by
+    :find-all find-all})
 
 (defn create [name &opt to-index]
   (default to-index [])

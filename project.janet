@@ -10,12 +10,8 @@
  :source @["tahani.c"])
 
 (declare-source
- :name "tahani/store"
- :source @["tahani/store/"])
-
-(declare-source
- :name "tahani/utils"
- :source @["tahani/utils/"])
+ :name "tahani"
+ :source @["tahani/"])
 
 # run repl with tahani included
 (phony "repl" ["build"] (os/execute ["janet" "-r" "-e" "(import build/tahani :as t)"] :p))
