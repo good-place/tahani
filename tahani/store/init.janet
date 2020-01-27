@@ -30,6 +30,7 @@
 (defn- load [self id] (:_get self id))
 
 (defn- find-by [self field term]
+  (assert (find |(= $ field) (self :to-index)))
   (seq [id :in (:_get self (:_make-index self field term))] (:_get self id)))
 
 (defn- find-all [self query]
