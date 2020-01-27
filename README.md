@@ -19,7 +19,9 @@ No documentation for now, just `test.janet`.
 ## TODOs
 
 - [ ] @todo add open, read and write optional options
-- [ ] @todo add iterator functions?
+- [ ] @todo add snapshot functionality
+- [ ] @todo add iterator functions
+- [ ] @todo add store strategies
 - [x] @todo add marshaling/unmarshaling store module
 - [x] make batches chainable
 - [x] add batch functions
