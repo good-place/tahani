@@ -1,12 +1,17 @@
-(import ./build/tahani :as t)
-(import ./tahani/store :as ts)
-(import ./tahani/utils :as tu)
+(import test/helper :prefix "" :exit true)
+
+(import ../build/tahani :as t)
+(import ../tahani/store :as ts)
+(import ../tahani/utils :as tu)
+
+(start-suite 0)
 
 (def db-name "testdb")
 
 # DB and Batch operations
 (defer (t/manage/destroy db-name)
   (def d (t/open db-name))
+  (assert d "DB is not opened")
   (def reqs 100_000)
   (print "\n ===== Saving " reqs " yummies")
   (loop [i :range [0 reqs]]
@@ -64,3 +69,4 @@
   (print " == 3 Sets Intersection ")
   (pp (tu/intersect (:find-all s {:job "Programmer" :name "Pepe" :pet "Cat"}))))
 
+(end-suite)
