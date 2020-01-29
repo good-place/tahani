@@ -180,7 +180,9 @@ static Janet cfun_record_get(int32_t argc, Janet *argv) {
     if (val == NULL) {
         return janet_wrap_nil();
     } else {
-        return janet_stringv((uint8_t *) val, vallen);
+	      Janet res = janet_stringv((uint8_t *) val, vallen);
+	      leveldb_free((void *)val);
+        return res;
     }
 }
 
