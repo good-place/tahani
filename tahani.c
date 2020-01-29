@@ -131,11 +131,20 @@ static Batch* initbatch(leveldb_writebatch_t *wb) {
 }
 
 static Janet cfun_open(int32_t argc, Janet *argv) {
-    janet_fixarity(argc, 1);
+    janet_arity(argc, 1, 2);
     const char *name = janet_getstring(argv, 0);
     leveldb_options_t *options = leveldb_options_create();
+    if (argc == 1) {
+        leveldb_options_set_create_if_missing(options, 1);
+    } else if (argc == 2) {
+        const uint8_t *opt = janet_getkeyword(argv, 1);
+        if (strcmp(opt, "eie") == 0) {
+            leveldb_options_set_error_if_exists(options, 1);
+        } else {
+            janet_panic("Unrecognized option");
+        }
+    }
     null_err;
-    leveldb_options_set_create_if_missing(options, 1);
     leveldb_t *conn = leveldb_open(options, name, &err);
 
     Db *db = initdb(name, conn, options);
