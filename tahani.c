@@ -134,9 +134,8 @@ static Janet cfun_open(int32_t argc, Janet *argv) {
     janet_arity(argc, 1, 2);
     const char *name = janet_getstring(argv, 0);
     leveldb_options_t *options = leveldb_options_create();
-    if (argc == 1) {
-        leveldb_options_set_create_if_missing(options, 1);
-    } else if (argc == 2) {
+    leveldb_options_set_create_if_missing(options, 1);
+    if (argc == 2) {
         const uint8_t *opt = janet_getkeyword(argv, 1);
         if (strcmp(opt, "eie") == 0) {
             leveldb_options_set_error_if_exists(options, 1);
@@ -146,9 +145,9 @@ static Janet cfun_open(int32_t argc, Janet *argv) {
     }
     null_err;
     leveldb_t *conn = leveldb_open(options, name, &err);
+    paniconerr(err);
 
     Db *db = initdb(name, conn, options);
-    paniconerr(err);
 
     return janet_wrap_abstract(db);
 }
@@ -320,7 +319,7 @@ static int batchget(void *p, Janet key, Janet *out) {
 }
 
 static const JanetReg db_cfuns[] = {
-    {"open", cfun_open, "(tahani/open name)\n\nOpens a level DB connection with the name. A name must be a string"},
+    {"open", cfun_open, "(tahani/open name &opt options)\n\nOpens a level DB connection with the name. A name must be a string. Only option is :eie which sets error_if_exists. Option create_if_missing is implicit. "},
     {"close", cfun_close, "(tahani/close db)\n\nCloses a level DB connection. A db must be a tahani/db."},
     {NULL, NULL, NULL}
 };
