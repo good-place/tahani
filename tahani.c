@@ -60,15 +60,15 @@ static void printdb(void *p, JanetBuffer *b) {
     Db *db = (Db *)p;
     char *state;
     switch (db->flags) {
-	      case FLAG_OPENED:
-		      state = "opened";
-		      break;
-        case FLAG_CLOSED:
-	        state = "closed";
-	        break;
-        default:
-	        state = "unknown";
-	   }
+    case FLAG_OPENED:
+        state = "opened";
+        break;
+    case FLAG_CLOSED:
+        state = "closed";
+        break;
+    default:
+        state = "unknown";
+    }
 
     const int32_t buflen = 11 + strlen(db->name) + strlen(state) + 1;
     char toprint[buflen];
@@ -88,7 +88,8 @@ static const JanetAbstractType AT_db = {
     NULL,
     NULL,
     printdb,
-    JANET_ATEND_TOSTRING};
+    JANET_ATEND_TOSTRING
+};
 
 static int batchget(void *p, Janet key, Janet *out);
 
@@ -102,9 +103,9 @@ static const JanetAbstractType AT_batch = {
 
 static void paniconerr(char *err) {
     if (err != NULL) {
-	      const int message_len = 24 + strlen(err) + 1;
-	      char message[message_len];
-	      sprintf(message, "LevelDB returned error: %s", err);
+        const int message_len = 24 + strlen(err) + 1;
+        char message[message_len];
+        sprintf(message, "LevelDB returned error: %s", err);
         leveldb_free(err);
         janet_panic(message);
     }
@@ -180,8 +181,8 @@ static Janet cfun_record_get(int32_t argc, Janet *argv) {
     if (val == NULL) {
         return janet_wrap_nil();
     } else {
-	      Janet res = janet_stringv((uint8_t *) val, vallen);
-	      leveldb_free((void *)val);
+        Janet res = janet_stringv((uint8_t *) val, vallen);
+        leveldb_free((void *) val);
         return res;
     }
 }
@@ -200,18 +201,18 @@ static Janet cfun_record_delete(int32_t argc, Janet *argv) {
 }
 
 static JanetMethod db_methods[] = {
-	    {"close", cfun_close},
-      {"get", cfun_record_get},
-      {"put", cfun_record_put},
-      {"delete", cfun_record_delete},
-      {NULL, NULL}
+    {"close", cfun_close},
+    {"get", cfun_record_get},
+    {"put", cfun_record_put},
+    {"delete", cfun_record_delete},
+    {NULL, NULL}
 };
 
 static int dbget(void *p, Janet key, Janet *out) {
-	    (void) p;
-      if (!janet_checktype(key, JANET_KEYWORD))
-                return 0;
-      return janet_getmethod(janet_unwrap_keyword(key), db_methods, out);
+    (void) p;
+    if (!janet_checktype(key, JANET_KEYWORD))
+        return 0;
+    return janet_getmethod(janet_unwrap_keyword(key), db_methods, out);
 }
 
 static Janet cfun_destroy(int32_t argc, Janet *argv) {
@@ -256,7 +257,7 @@ static Janet cfun_batch_destroy(int32_t argc, Janet *argv) {
 }
 
 static Janet cfun_batch_write(int32_t argc, Janet *argv) {
-	  janet_fixarity(argc, 2);
+    janet_fixarity(argc, 2);
     Batch *batch = janet_getabstract(argv, 0, &AT_batch);
     Db *db = janet_getabstract(argv, 1, &AT_db);
     null_err;
@@ -295,18 +296,18 @@ static Janet cfun_batch_delete(int32_t argc, Janet *argv) {
 }
 
 static JanetMethod batch_methods[] = {
-      {"write", cfun_batch_write},
-      {"put", cfun_batch_put},
-      {"delete", cfun_batch_delete},
-      {"destroy", cfun_batch_destroy},
-      {NULL, NULL}
+    {"write", cfun_batch_write},
+    {"put", cfun_batch_put},
+    {"delete", cfun_batch_delete},
+    {"destroy", cfun_batch_destroy},
+    {NULL, NULL}
 };
 
 static int batchget(void *p, Janet key, Janet *out) {
-	    (void) p;
-      if (!janet_checktype(key, JANET_KEYWORD))
-                return 0;
-      return janet_getmethod(janet_unwrap_keyword(key), batch_methods, out);
+    (void) p;
+    if (!janet_checktype(key, JANET_KEYWORD))
+        return 0;
+    return janet_getmethod(janet_unwrap_keyword(key), batch_methods, out);
 }
 
 static const JanetReg db_cfuns[] = {
