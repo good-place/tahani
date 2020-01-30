@@ -438,7 +438,7 @@ static Janet cfun_iterator_valid(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 1);
     Iterator *iterator = janet_getabstract(argv, 0, &AT_iterator);
 
-	  return janet_wrap_boolean(leveldb_iter_valid(iterator->handle));
+    return janet_wrap_boolean(leveldb_iter_valid(iterator->handle));
 }
 
 static Janet cfun_iterator_seek_to_first(int32_t argc, Janet *argv) {
@@ -455,6 +455,35 @@ static Janet cfun_iterator_seek_to_last(int32_t argc, Janet *argv) {
     Iterator *iterator = janet_getabstract(argv, 0, &AT_iterator);
 
     leveldb_iter_seek_to_last(iterator->handle);
+
+    return janet_wrap_abstract(iterator);
+}
+
+static Janet cfun_iterator_next(int32_t argc, Janet *argv) {
+    janet_fixarity(argc, 1);
+    Iterator *iterator = janet_getabstract(argv, 0, &AT_iterator);
+
+    leveldb_iter_next(iterator->handle);
+
+    return janet_wrap_abstract(iterator);
+}
+
+static Janet cfun_iterator_prev(int32_t argc, Janet *argv) {
+    janet_fixarity(argc, 1);
+    Iterator *iterator = janet_getabstract(argv, 0, &AT_iterator);
+
+    leveldb_iter_prev(iterator->handle);
+
+    return janet_wrap_abstract(iterator);
+}
+
+static Janet cfun_iterator_seek(int32_t argc, Janet *argv) {
+    janet_fixarity(argc, 2);
+    Iterator *iterator = janet_getabstract(argv, 0, &AT_iterator);
+    const char *key = janet_getstring(argv, 1);
+    size_t keylen = janet_string_length(key);
+
+    leveldb_iter_seek(iterator->handle, key, keylen);
 
     return janet_wrap_abstract(iterator);
 }
@@ -489,6 +518,10 @@ static JanetMethod iterator_methods[] = {
     {"destroy", cfun_iterator_destroy},
     {"valid?", cfun_iterator_valid},
     {"seek-to-first", cfun_iterator_seek_to_first},
+    {"seek-to-last", cfun_iterator_seek_to_last},
+    {"next", cfun_iterator_next},
+    {"prev", cfun_iterator_prev},
+    {"seek", cfun_iterator_seek},
     {"key", cfun_iterator_key},
     {"value", cfun_iterator_value},
     {NULL, NULL}
@@ -535,6 +568,9 @@ static const JanetReg iterator_cfuns[] = {
     {"iterator/valid?", cfun_iterator_valid, "(tahani/iterator/valid? iterator)\n\nReturns true if validator is valid"},
     {"iterator/seek-to-first", cfun_iterator_seek_to_first, "(tahani/iterator/seek-to-first iterator)\n\nSeeks to first iterator item."},
     {"iterator/seek-to-last", cfun_iterator_seek_to_last, "(tahani/iterator/seek-to-last iterator)\n\nSeeks to last iterator item."},
+    {"iterator/next", cfun_iterator_next, "(tahani/iterator/next iterator)\n\nSeeks iterator to next item"},
+    {"iterator/prev", cfun_iterator_prev, "(tahani/iterator/prev iterator)\n\nSeeks iterator to prev item"},
+    {"iterator/seek", cfun_iterator_seek, "(tahani/iterator/seek iterator)\n\nSeeks iterator to provided key"},
     {"iterator/key", cfun_iterator_key, "(tahani/iterator/key iterator)\n\nReturns seeked key in iterator"},
     {"iterator/value", cfun_iterator_value, "(tahani/iterator/value iterator)\n\nReturns seeked value in iterator"},
     {NULL, NULL, NULL}
