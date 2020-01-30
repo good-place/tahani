@@ -46,7 +46,8 @@
   (with [d (t/open db-name)]
         (def s (t/snapshot/create d))
         (assert s "Snapshot is not created")
-        (assert-no-error "Snapshot is not released" (t/snapshot/release s))))
+        (assert-no-error "Snapshot is not released" (t/snapshot/release s))
+        (assert-no-error (:release (t/snapshot/create d)))))
 
 #@todo split
 (defer (t/manage/destroy "peopletest")

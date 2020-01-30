@@ -26,9 +26,9 @@ typedef struct {
 } Batch;
 
 typedef struct {
-	const leveldb_snapshot_t* handle;
-	leveldb_t* dbhandle;
-	int flags;
+    const leveldb_snapshot_t* handle;
+    leveldb_t* dbhandle;
+    int flags;
 } Snapshot;
 
 /* Close a db, noop if already closed */
@@ -50,10 +50,10 @@ static void destroybatch(Batch *batch) {
 }
 
 static void releasesnaphot(Snapshot *snapshot) {
-	if (!(snapshot->flags & FLAG_RELEASED)) {
-		snapshot->flags |= FLAG_RELEASED;
-		leveldb_release_snapshot(snapshot->dbhandle, snapshot->handle);
- }
+    if (!(snapshot->flags & FLAG_RELEASED)) {
+        snapshot->flags |= FLAG_RELEASED;
+        leveldb_release_snapshot(snapshot->dbhandle, snapshot->handle);
+    }
 }
 
 static int gcdb(void *p, size_t s) {
@@ -122,10 +122,14 @@ static const JanetAbstractType AT_batch = {
     JANET_ATEND_GET
 };
 
+static int snapshotget(void *p, Janet key, Janet *out);
+
 static const JanetAbstractType AT_snapshot = {
-	"tahani/snapshot",
-	gcsnapshot,
-	JANET_ATEND_GC
+    "tahani/snapshot",
+    gcsnapshot,
+    NULL,
+    snapshotget,
+    JANET_ATEND_GET
 };
 
 static void paniconerr(char *err) {
@@ -337,23 +341,6 @@ static Janet cfun_batch_delete(int32_t argc, Janet *argv) {
     return janet_wrap_abstract(batch);
 }
 
-static Janet cfun_snapshot_create(int32_t argc, Janet *argv) {
-	janet_fixarity(argc, 1);
-  Db *db = janet_getabstract(argv, 0, &AT_db);
-	Snapshot *snapshot = initsnapshot(db->handle);
-
-	return janet_wrap_abstract(snapshot);
-	}
-
-static Janet cfun_snapshot_release(int32_t argc, Janet *argv) {
-	janet_fixarity(argc, 1);
-    Snapshot *snapshot = janet_getabstract(argv, 0, &AT_snapshot);
-
-releasesnaphot(snapshot);
-    return janet_wrap_nil();
-}
-
-
 static JanetMethod batch_methods[] = {
     {"write", cfun_batch_write},
     {"put", cfun_batch_put},
@@ -367,6 +354,34 @@ static int batchget(void *p, Janet key, Janet *out) {
     if (!janet_checktype(key, JANET_KEYWORD))
         return 0;
     return janet_getmethod(janet_unwrap_keyword(key), batch_methods, out);
+}
+
+static Janet cfun_snapshot_create(int32_t argc, Janet *argv) {
+    janet_fixarity(argc, 1);
+    Db *db = janet_getabstract(argv, 0, &AT_db);
+    Snapshot *snapshot = initsnapshot(db->handle);
+
+    return janet_wrap_abstract(snapshot);
+}
+
+static Janet cfun_snapshot_release(int32_t argc, Janet *argv) {
+    janet_fixarity(argc, 1);
+    Snapshot *snapshot = janet_getabstract(argv, 0, &AT_snapshot);
+
+    releasesnaphot(snapshot);
+    return janet_wrap_nil();
+}
+
+static JanetMethod snapshot_methods[] = {
+    {"release", cfun_snapshot_release},
+    {NULL, NULL}
+};
+
+static int snapshotget(void *p, Janet key, Janet *out) {
+    (void) p;
+    if (!janet_checktype(key, JANET_KEYWORD))
+        return 0;
+    return janet_getmethod(janet_unwrap_keyword(key), snapshot_methods, out);
 }
 
 static const JanetReg db_cfuns[] = {
@@ -392,9 +407,9 @@ static const JanetReg batch_cfuns[] = {
 };
 
 static const JanetReg snapshot_cfuns[] = {
-	{"snapshot/create", cfun_snapshot_create, "(tahani/snapshot/create db)\n\nCreates snapshot for the db. Returns the snapshot."},
-	{"snapshot/release", cfun_snapshot_release, "(tahani/snapshot/release snapshot)\n\nReleases the snapshot."},
-  {NULL, NULL, NULL}
+    {"snapshot/create", cfun_snapshot_create, "(tahani/snapshot/create db)\n\nCreates snapshot for the db. Returns the snapshot."},
+    {"snapshot/release", cfun_snapshot_release, "(tahani/snapshot/release snapshot)\n\nReleases the snapshot."},
+    {NULL, NULL, NULL}
 };
 
 static const JanetReg manage_cfuns[] = {
@@ -407,6 +422,6 @@ JANET_MODULE_ENTRY(JanetTable *env) {
     janet_cfuns(env, "tahani", db_cfuns);
     janet_cfuns(env, "tahani", record_cfuns);
     janet_cfuns(env, "tahani", batch_cfuns);
-		janet_cfuns(env, "tahani", snapshot_cfuns);
-		janet_cfuns(env, "tahani", manage_cfuns);
+    janet_cfuns(env, "tahani", snapshot_cfuns);
+    janet_cfuns(env, "tahani", manage_cfuns);
 }
