@@ -7,13 +7,16 @@
   (string field "-" (hash2hex data (self :ctx))))
 
 (defn- _open [self]
-  (t/open (self :name)))
+  (put self :db (t/open (self :name))))
+
+(defn close [self]
+  (:close (self :db)))
 
 (defn- _get [self id]
-  (with [d (:_open self)] (-?> (:get d id) (unmarshal))))
+   (-?> (:get (self :db) id) (unmarshal)))
 
 (defn- _write [self batch]
-  (with [d (:_open self)] (:write batch d)))
+   (:write batch (self :db)))
 
 (defn- save [self data]
   (let [md (freeze (marshal data))
@@ -44,6 +47,8 @@
     :_get _get
     :_write _write
     :_open _open
+    :close close
+    :_db nil
     :save save
     :load load
     :find-by find-by
@@ -52,4 +57,5 @@
 (defn create [name &opt to-index]
   (default to-index [])
   (assert (and (tuple? to-index) (all |(keyword? $) to-index)))
-  (-> @{} (table/setproto Store) (merge-into {:name name :to-index to-index})))
+  (def s (-> @{} (table/setproto Store) (merge-into {:name name :to-index to-index})))
+  (:_open s))
