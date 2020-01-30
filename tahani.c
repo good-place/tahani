@@ -3,11 +3,11 @@
 
 #include "leveldb/include/leveldb/c.h"
 
-#define FLAG_OPENED 1
-#define FLAG_CLOSED 0
-#define FLAG_CREATED 1
-#define FLAG_DESTROYED 0
-#define FLAG_RELEASED 0
+#define FLAG_OPENED 0
+#define FLAG_CLOSED 1
+#define FLAG_CREATED 0
+#define FLAG_DESTROYED 1
+#define FLAG_RELEASED 1
 #define null_err char *err = NULL
 
 
@@ -26,7 +26,8 @@ typedef struct {
 } Batch;
 
 typedef struct {
-	leveldb_snapshot_t* handle;
+	const leveldb_snapshot_t* handle;
+	leveldb_t* dbhandle;
 	int flags;
 } Snapshot;
 
@@ -48,10 +49,10 @@ static void destroybatch(Batch *batch) {
     }
 }
 
-static void releasesnaphot(Db *db, Snapshot *snapshot) {
+static void releasesnaphot(Snapshot *snapshot) {
 	if (!(snapshot->flags & FLAG_RELEASED)) {
 		snapshot->flags |= FLAG_RELEASED;
-		leveldb_release_snapshot(db->handle, snapshot->handle);
+		leveldb_release_snapshot(snapshot->dbhandle, snapshot->handle);
  }
 }
 
@@ -59,13 +60,6 @@ static int gcdb(void *p, size_t s) {
     (void) s;
     Db *db = (Db *)p;
     closedb(db);
-    return 0;
-}
-
-static int gcbatch(void *p, size_t s) {
-    (void) s;
-    Batch *b = (Batch *) p;
-    destroybatch(b);
     return 0;
 }
 
@@ -88,6 +82,20 @@ static void printdb(void *p, JanetBuffer *b) {
     sprintf(toprint, "name=%s state=%s", db->name, state);
 
     janet_buffer_push_cstring(b, toprint);
+}
+
+static int gcbatch(void *p, size_t s) {
+    (void) s;
+    Batch *b = (Batch *) p;
+    destroybatch(b);
+    return 0;
+}
+
+static int gcsnapshot(void *p, size_t s) {
+    (void) s;
+    Snapshot *sn = (Snapshot *) p;
+    releasesnaphot(sn);
+    return 0;
 }
 
 static int dbget(void *p, Janet key, Janet *out);
@@ -114,6 +122,12 @@ static const JanetAbstractType AT_batch = {
     JANET_ATEND_GET
 };
 
+static const JanetAbstractType AT_snapshot = {
+	"tahani/snapshot",
+	gcsnapshot,
+	JANET_ATEND_GC
+};
+
 static void paniconerr(char *err) {
     if (err != NULL) {
         const int message_len = 24 + strlen(err) + 1;
@@ -136,11 +150,21 @@ static Db* initdb(const char *name, leveldb_t *conn, leveldb_options_t *options)
     return db;
 }
 
-static Batch* initbatch(leveldb_writebatch_t *wb) {
+static Batch* initbatch() {
+    leveldb_writebatch_t *wb = leveldb_writebatch_create();
     Batch* batch = (Batch *) janet_abstract(&AT_batch, sizeof(Batch));
     batch->handle = wb;
     batch->flags = FLAG_CREATED;
     return batch;
+}
+
+static Snapshot* initsnapshot(leveldb_t *db) {
+    const leveldb_snapshot_t *sn = leveldb_create_snapshot(db);
+    Snapshot* snapshot = (Snapshot *) janet_abstract(&AT_snapshot, sizeof(Snapshot));
+    snapshot->handle = sn;
+    snapshot->dbhandle = db;
+    snapshot->flags = FLAG_CREATED;
+    return snapshot;
 }
 
 static Janet cfun_open(int32_t argc, Janet *argv) {
@@ -263,8 +287,7 @@ static Janet cfun_repair(int32_t argc, Janet *argv) {
 static Janet cfun_batch_create(int32_t argc, Janet *argv) {
     (void) argv;
     janet_fixarity(argc, 0);
-    leveldb_writebatch_t *wb = leveldb_writebatch_create();
-    Batch *batch = initbatch(wb);
+    Batch *batch = initbatch();
 
     return janet_wrap_abstract(batch);
 }
@@ -298,7 +321,6 @@ static Janet cfun_batch_put(int32_t argc, Janet *argv) {
     null_err;
 
     leveldb_writebatch_put(batch->handle, key, keylen, val, vallen);
-    paniconerr(err);
 
     return janet_wrap_abstract(batch);
 }
@@ -311,10 +333,26 @@ static Janet cfun_batch_delete(int32_t argc, Janet *argv) {
     null_err;
 
     leveldb_writebatch_delete(batch->handle, key, keylen);
-    paniconerr(err);
 
     return janet_wrap_abstract(batch);
 }
+
+static Janet cfun_snapshot_create(int32_t argc, Janet *argv) {
+	janet_fixarity(argc, 1);
+  Db *db = janet_getabstract(argv, 0, &AT_db);
+	Snapshot *snapshot = initsnapshot(db->handle);
+
+	return janet_wrap_abstract(snapshot);
+	}
+
+static Janet cfun_snapshot_release(int32_t argc, Janet *argv) {
+	janet_fixarity(argc, 1);
+    Snapshot *snapshot = janet_getabstract(argv, 0, &AT_snapshot);
+
+releasesnaphot(snapshot);
+    return janet_wrap_nil();
+}
+
 
 static JanetMethod batch_methods[] = {
     {"write", cfun_batch_write},
@@ -353,6 +391,12 @@ static const JanetReg batch_cfuns[] = {
     {NULL, NULL, NULL}
 };
 
+static const JanetReg snapshot_cfuns[] = {
+	{"snapshot/create", cfun_snapshot_create, "(tahani/snapshot/create db)\n\nCreates snapshot for the db. Returns the snapshot."},
+	{"snapshot/release", cfun_snapshot_release, "(tahani/snapshot/release snapshot)\n\nReleases the snapshot."},
+  {NULL, NULL, NULL}
+};
+
 static const JanetReg manage_cfuns[] = {
     {"manage/destroy", cfun_destroy, "(tahani/destroy db)\n\nDestroy the level DB with the name. A name must be a string."},
     {"manage/repair", cfun_repair, "(tahani/repair db)\n\nDestroy the level DB with the name. A name must be a string."},
@@ -363,5 +407,6 @@ JANET_MODULE_ENTRY(JanetTable *env) {
     janet_cfuns(env, "tahani", db_cfuns);
     janet_cfuns(env, "tahani", record_cfuns);
     janet_cfuns(env, "tahani", batch_cfuns);
-    janet_cfuns(env, "tahani", manage_cfuns);
+		janet_cfuns(env, "tahani", snapshot_cfuns);
+		janet_cfuns(env, "tahani", manage_cfuns);
 }
