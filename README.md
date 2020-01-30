@@ -2,27 +2,24 @@
 
 Janet wrapper to leveldb C API
 
+## Status
+
+Early Alpha.
+
 ## Usage
 
-The basic `open`, `close`, `put` and `get` operations are inplemented.
+Almost all of the functionality needed is implemented.
 
-The management `repair` and `destroy` operations are implemented.
-
-The batch `create`, `destroy`, `write` operations are implemented.
-
-The batch `put` and `delete` operations are implemented.
-
-You can run test with `janet test.janet` after you `jpm build`.
-
-No documentation for now, just `test.janet`.
+There is almost no documentation, look into the tests if you like to see what
+is there.
 
 ## TODOs
 
+- [ ] @todo split store to bighouse
 - [ ] @todo add open, read and write optional options
-- [ ] @todo add snapshot functionality
-- [ ] @todo add iterator functions
-- [ ] @todo add store strategies
-- [x] @todo add marshaling/unmarshaling store module
+- [x] add snapshot functionality
+- [x] add iterator functions
+- [x] add marshaling/unmarshaling store module
 - [x] make batches chainable
 - [x] add batch functions
 - [x] split to more modules

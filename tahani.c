@@ -424,6 +424,7 @@ static Janet cfun_iterator_create(int32_t argc, Janet *argv) {
     janet_arity(argc, 1, 2);
     Db *db = janet_getabstract(argv, 0, &AT_db);
     leveldb_readoptions_t* readoptions = leveldb_readoptions_create();
+    leveldb_readoptions_set_fill_cache(readoptions, 0);
     if (argc == 2) {
         Snapshot *sn = janet_getabstract(argv, 1, &AT_snapshot);
         leveldb_readoptions_set_snapshot(readoptions, sn->handle);
