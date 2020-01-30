@@ -20,6 +20,12 @@
   (assert (= (string d) "name=testdb state=closed") "Database state is not closed"))
 
 (defer (t/manage/destroy db-name)
+  (with [d (t/open db-name :eie)]
+    (assert d "DB is not opened with option error if exist")
+    (:close d)
+    (assert-error "Does not panic with error if exist option" (t/open db-name :eie))))
+
+(defer (t/manage/destroy db-name)
   (with [d (t/open db-name)]
     (def b (t/batch/create))
     (assert b "Batch is not created")
@@ -29,9 +35,8 @@
       (:delete "HOHOHO")
       (:write d)
       (:destroy))
-    (assert (nil? (t/record/get d "HOHOHO")) "Record is not delete by batch")
+    (assert (nil? (t/record/get d "HOHOHO")) "Record is not deleted by batch")
     (assert (t/record/get d "HEAT") "Record is not inserted by batch")))
-
 
 (defer (t/manage/destroy db-name)
   (with [d (t/open db-name)] )
