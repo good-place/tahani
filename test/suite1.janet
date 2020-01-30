@@ -38,5 +38,6 @@
         (def ri (tu/intersect (:find-all s {:job "Programmer" :name "Pepe"})))
         (assert ri "Sets are not in intersection")
         (assert (= (length ri) 1) "Records are not intersected right")))
+
 (end-suite)
 

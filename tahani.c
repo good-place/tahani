@@ -31,6 +31,11 @@ typedef struct {
     int flags;
 } Snapshot;
 
+typedef struct {
+    leveldb_iterator_t* handle;
+    int flags;
+} Iterator;
+
 /* Close a db, noop if already closed */
 static void closedb(Db *db) {
     if (!(db->flags & FLAG_CLOSED)) {
@@ -49,10 +54,17 @@ static void destroybatch(Batch *batch) {
     }
 }
 
-static void releasesnaphot(Snapshot *snapshot) {
+static void releasesnapshot(Snapshot *snapshot) {
     if (!(snapshot->flags & FLAG_RELEASED)) {
         snapshot->flags |= FLAG_RELEASED;
         leveldb_release_snapshot(snapshot->dbhandle, snapshot->handle);
+    }
+}
+
+static void destroyiterator(Iterator *iterator) {
+    if (!(iterator->flags & FLAG_DESTROYED)) {
+        iterator->flags |= FLAG_DESTROYED;
+        leveldb_iter_destroy(iterator->handle);
     }
 }
 
@@ -91,10 +103,17 @@ static int gcbatch(void *p, size_t s) {
     return 0;
 }
 
+static int gciterator(void *p, size_t s) {
+    (void) s;
+    Iterator *it = (Iterator *) p;
+    destroyiterator(it);
+    return 0;
+}
+
 static int gcsnapshot(void *p, size_t s) {
     (void) s;
     Snapshot *sn = (Snapshot *) p;
-    releasesnaphot(sn);
+    releasesnapshot(sn);
     return 0;
 }
 
@@ -129,6 +148,16 @@ static const JanetAbstractType AT_snapshot = {
     gcsnapshot,
     NULL,
     snapshotget,
+    JANET_ATEND_GET
+};
+
+static int iteratorget(void *p, Janet key, Janet *out);
+
+static const JanetAbstractType AT_iterator = {
+    "tahani/iterator",
+    gciterator,
+    NULL,
+    iteratorget,
     JANET_ATEND_GET
 };
 
@@ -169,6 +198,13 @@ static Snapshot* initsnapshot(leveldb_t *db) {
     snapshot->dbhandle = db;
     snapshot->flags = FLAG_CREATED;
     return snapshot;
+}
+
+static Iterator* inititerator(leveldb_t* db, leveldb_readoptions_t* readoptions) {
+    leveldb_iterator_t *it = leveldb_create_iterator(db, readoptions);
+    Iterator* iterator = (Iterator *) janet_abstract(&AT_iterator, sizeof(Iterator));
+    iterator->handle = it;
+    return iterator;
 }
 
 static Janet cfun_open(int32_t argc, Janet *argv) {
@@ -368,7 +404,7 @@ static Janet cfun_snapshot_release(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 1);
     Snapshot *snapshot = janet_getabstract(argv, 0, &AT_snapshot);
 
-    releasesnaphot(snapshot);
+    releasesnapshot(snapshot);
     return janet_wrap_nil();
 }
 
@@ -382,6 +418,87 @@ static int snapshotget(void *p, Janet key, Janet *out) {
     if (!janet_checktype(key, JANET_KEYWORD))
         return 0;
     return janet_getmethod(janet_unwrap_keyword(key), snapshot_methods, out);
+}
+
+static Janet cfun_iterator_create(int32_t argc, Janet *argv) {
+    janet_arity(argc, 1, 2);
+    Db *db = janet_getabstract(argv, 0, &AT_db);
+    leveldb_readoptions_t* readoptions = leveldb_readoptions_create();
+    if (argc == 2) {
+        Snapshot *sn = janet_getabstract(argv, 1, &AT_snapshot);
+        leveldb_readoptions_set_snapshot(readoptions, sn->handle);
+    }
+
+    Iterator *iterator = inititerator(db->handle, readoptions);
+
+    return janet_wrap_abstract(iterator);
+}
+
+static Janet cfun_iterator_valid(int32_t argc, Janet *argv) {
+    janet_fixarity(argc, 1);
+    Iterator *iterator = janet_getabstract(argv, 0, &AT_iterator);
+
+	  return janet_wrap_boolean(leveldb_iter_valid(iterator->handle));
+}
+
+static Janet cfun_iterator_seek_to_first(int32_t argc, Janet *argv) {
+    janet_fixarity(argc, 1);
+    Iterator *iterator = janet_getabstract(argv, 0, &AT_iterator);
+
+    leveldb_iter_seek_to_first(iterator->handle);
+
+    return janet_wrap_abstract(iterator);
+}
+
+static Janet cfun_iterator_seek_to_last(int32_t argc, Janet *argv) {
+    janet_fixarity(argc, 1);
+    Iterator *iterator = janet_getabstract(argv, 0, &AT_iterator);
+
+    leveldb_iter_seek_to_last(iterator->handle);
+
+    return janet_wrap_abstract(iterator);
+}
+
+static Janet cfun_iterator_key(int32_t argc, Janet *argv) {
+    janet_fixarity(argc, 1);
+    Iterator *iterator = janet_getabstract(argv, 0, &AT_iterator);
+    size_t keylen;
+    const char* key = leveldb_iter_key(iterator->handle, &keylen);
+    Janet res = janet_stringv((uint8_t *) key, keylen);
+    return res;
+}
+
+static Janet cfun_iterator_value(int32_t argc, Janet *argv) {
+    janet_fixarity(argc, 1);
+    Iterator *iterator = janet_getabstract(argv, 0, &AT_iterator);
+    size_t vallen;
+    const char* value = leveldb_iter_value(iterator->handle, &vallen);
+    Janet res = janet_stringv((uint8_t *) value, vallen);
+    return res;
+}
+
+static Janet cfun_iterator_destroy(int32_t argc, Janet *argv) {
+    janet_fixarity(argc, 1);
+    Iterator *iterator = janet_getabstract(argv, 0, &AT_iterator);
+
+    destroyiterator(iterator);
+    return janet_wrap_nil();
+}
+
+static JanetMethod iterator_methods[] = {
+    {"destroy", cfun_iterator_destroy},
+    {"valid?", cfun_iterator_valid},
+    {"seek-to-first", cfun_iterator_seek_to_first},
+    {"key", cfun_iterator_key},
+    {"value", cfun_iterator_value},
+    {NULL, NULL}
+};
+
+static int iteratorget(void *p, Janet key, Janet *out) {
+    (void) p;
+    if (!janet_checktype(key, JANET_KEYWORD))
+        return 0;
+    return janet_getmethod(janet_unwrap_keyword(key), iterator_methods, out);
 }
 
 static const JanetReg db_cfuns[] = {
@@ -412,6 +529,17 @@ static const JanetReg snapshot_cfuns[] = {
     {NULL, NULL, NULL}
 };
 
+static const JanetReg iterator_cfuns[] = {
+    {"iterator/create", cfun_iterator_create, "(tahani/iterator/create db)\n\nCreates iterator for the db. Returns the iterator."},
+    {"iterator/destroy", cfun_iterator_destroy, "(tahani/iterator/destroy iterator)\n\nDestroy the iterator."},
+    {"iterator/valid?", cfun_iterator_valid, "(tahani/iterator/valid? iterator)\n\nReturns true if validator is valid"},
+    {"iterator/seek-to-first", cfun_iterator_seek_to_first, "(tahani/iterator/seek-to-first iterator)\n\nSeeks to first iterator item."},
+    {"iterator/seek-to-last", cfun_iterator_seek_to_last, "(tahani/iterator/seek-to-last iterator)\n\nSeeks to last iterator item."},
+    {"iterator/key", cfun_iterator_key, "(tahani/iterator/key iterator)\n\nReturns seeked key in iterator"},
+    {"iterator/value", cfun_iterator_value, "(tahani/iterator/value iterator)\n\nReturns seeked value in iterator"},
+    {NULL, NULL, NULL}
+};
+
 static const JanetReg manage_cfuns[] = {
     {"manage/destroy", cfun_destroy, "(tahani/destroy db)\n\nDestroy the level DB with the name. A name must be a string."},
     {"manage/repair", cfun_repair, "(tahani/repair db)\n\nDestroy the level DB with the name. A name must be a string."},
@@ -423,5 +551,6 @@ JANET_MODULE_ENTRY(JanetTable *env) {
     janet_cfuns(env, "tahani", record_cfuns);
     janet_cfuns(env, "tahani", batch_cfuns);
     janet_cfuns(env, "tahani", snapshot_cfuns);
+    janet_cfuns(env, "tahani", iterator_cfuns);
     janet_cfuns(env, "tahani", manage_cfuns);
 }

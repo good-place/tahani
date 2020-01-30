@@ -47,4 +47,22 @@
         (assert-no-error "Snapshot is not released" (t/snapshot/release s))
         (assert-no-error (:release (t/snapshot/create d)))))
 
+(defer (t/manage/destroy db-name)
+  (with [d (t/open db-name)]
+        (t/record/put d "HOHOHO" "Santa")
+        (t/record/put d "HEAT" "Summer")
+        (def i (t/iterator/create d))
+        (assert i "Iterator is not created")
+        (assert (not (t/iterator/valid? i)) "Iterator is valid before seek")
+
+        (assert-no-error "Iterator does not seek to first" (t/iterator/seek-to-first i))
+        (assert (t/iterator/valid? i) "Iterator is not valid after seek")
+        (assert (= (t/iterator/key i) "HEAT") "First key is not HEAT")
+        (assert (= (t/iterator/value i) "Summer") "First value is not Summer")
+        (assert-no-error "Iterator does not seek to last" (t/iterator/seek-to-last i))
+        (assert (= (t/iterator/key i) "HOHOHO") "First key is not HOHOHO")
+        (assert (= (t/iterator/value i) "Santa") "First value is not Santa")
+
+        (:destroy i)))
+
 (end-suite)
