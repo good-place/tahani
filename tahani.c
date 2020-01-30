@@ -3,10 +3,11 @@
 
 #include "leveldb/include/leveldb/c.h"
 
-#define FLAG_OPENED 0
-#define FLAG_CLOSED 1
-#define FLAG_CREATED 2
-#define FLAG_DESTROYED 3
+#define FLAG_OPENED 1
+#define FLAG_CLOSED 0
+#define FLAG_CREATED 1
+#define FLAG_DESTROYED 0
+#define FLAG_RELEASED 0
 #define null_err char *err = NULL
 
 
@@ -24,6 +25,11 @@ typedef struct {
     int flags;
 } Batch;
 
+typedef struct {
+	leveldb_snapshot_t* handle;
+	int flags;
+} Snapshot;
+
 /* Close a db, noop if already closed */
 static void closedb(Db *db) {
     if (!(db->flags & FLAG_CLOSED)) {
@@ -40,6 +46,13 @@ static void destroybatch(Batch *batch) {
         batch->flags |= FLAG_DESTROYED;
         leveldb_writebatch_destroy(batch->handle);
     }
+}
+
+static void releasesnaphot(Db *db, Snapshot *snapshot) {
+	if (!(snapshot->flags & FLAG_RELEASED)) {
+		snapshot->flags |= FLAG_RELEASED;
+		leveldb_release_snapshot(db->handle, snapshot->handle);
+ }
 }
 
 static int gcdb(void *p, size_t s) {
