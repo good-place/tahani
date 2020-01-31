@@ -9,9 +9,5 @@
  :lflags ["-lleveldb"]
  :source @["tahani.c"])
 
-(declare-source
- :name "tahani"
- :source @["tahani/"])
-
 # run repl with tahani included
 (phony "repl" ["build"] (os/execute ["janet" "-r" "-e" "(import build/tahani :as t)"] :p))
