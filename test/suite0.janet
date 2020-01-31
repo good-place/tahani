@@ -54,7 +54,6 @@
         (def i (t/iterator/create d))
         (assert i "Iterator is not created")
         (assert (not (t/iterator/valid? i)) "Iterator is valid before seek")
-
         (assert-no-error "Iterator does not seek to first" (t/iterator/seek-to-first i))
         (assert (t/iterator/valid? i) "Iterator is not valid after seek")
         (assert (= (t/iterator/key i) "HEAT") "First key is not HEAT")
@@ -71,6 +70,14 @@
         (assert (= (t/iterator/key i) "HEAT") "First key is not HEAT")
         (assert-no-error "Iterator does not seek key" (t/iterator/seek i "HOHOHO"))
         (assert (= (t/iterator/value i) "Santa") "Seeked value is not Santa")
-        (:destroy i)))
+        (:destroy i)
+        (def snapshot (t/snapshot/create d))
+        (def si (t/iterator/create d snapshot))
+        (assert si "Iterator with snapshot is not created")
+        (:put d "MEAT" "All")
+        (:seek-to-last si)
+        (assert (= (:key si) "HOHOHO") "Snapshot Iterator has other last key")
+        (:release snapshot)
+        (:destroy si)))
 
 (end-suite)
