@@ -84,7 +84,7 @@ You can call his function as a method on database AbstractType
 
 #### Repairing the database
 
-`(tahani/manage/repair )` repairs the database. `db-name` must
+`(tahani/manage/repair db-name)` repairs the database. `db-name` must
 be the `string` same as the directory name, where the database resides on the
 disk.
 The database cannot be open.
@@ -259,14 +259,13 @@ You can call his function as a method on `tahani/iterator` AbstractType
 ## TODOs
 
 - [  ] @todo add open, read and write optional options
-- - [x] split store to mansion
-- - [x] add snapshot functionality
-- - [x] add iterator functions
-- - [x] add marshaling/unmarshaling store module
-- - [x] make batches chained
-- - [x] add batch functions
-- - [x] split to more modules
-- - [x] add delete function
-- - [x] add management functions
-- - [x] add error checks
-- i
+- [x] split store to mansion
+- [x] add snapshot functionality
+- [x] add iterator functions
+- [x] add marshaling/unmarshaling store module
+- [x] make batches chained
+- [x] add batch functions
+- [x] split to more modules
+- [x] add delete function
+- [x] add management functions
+- [x] add error checks
