@@ -2,7 +2,7 @@
 # tahani
 
 Simple (meaning not all implemented) and opinionated (meaning implemented
-only what I needed) [LevelDB] wrapper for [Janet][1] language.
+only what I needed) [LevelDB][2] wrapper for [Janet][1] language.
 
 ## Status
 
@@ -19,7 +19,7 @@ significant
 additions to library API, but I welcome any suggestions/PR. Biggest omission
 right now are Comparator and Filters facilities.
 
-[1]: https://github.com/janet-lang/janet Janet Language
+[1]: https://github.com/janet-lang/janet
 [2]: https://github.com/google/leveldb
 [3]: https://github.com/pepe/mansion
 
