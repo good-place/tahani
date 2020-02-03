@@ -10,7 +10,6 @@
 #define FLAG_RELEASED 1
 #define null_err char *err = NULL
 
-
 typedef struct {
     const char *name;
     leveldb_t* handle;
@@ -572,8 +571,8 @@ static const JanetReg iterator_cfuns[] = {
     {"iterator/next", cfun_iterator_next, "(tahani/iterator/next iterator)\n\nSeeks iterator to next item"},
     {"iterator/prev", cfun_iterator_prev, "(tahani/iterator/prev iterator)\n\nSeeks iterator to prev item"},
     {"iterator/seek", cfun_iterator_seek, "(tahani/iterator/seek iterator)\n\nSeeks iterator to provided key"},
-    {"iterator/key", cfun_iterator_key, "(tahani/iterator/key iterator)\n\nReturns seeked key in iterator"},
-    {"iterator/value", cfun_iterator_value, "(tahani/iterator/value iterator)\n\nReturns seeked value in iterator"},
+    {"iterator/key", cfun_iterator_key, "(tahani/iterator/key iterator)\n\nReturns current key in iterator"},
+    {"iterator/value", cfun_iterator_value, "(tahani/iterator/value iterator)\n\nReturns current value in iterator"},
     {NULL, NULL, NULL}
 };
 

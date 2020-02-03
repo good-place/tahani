@@ -108,7 +108,7 @@ batches are db independent. Returns Janet AbstractType `tahani/batch`.
 
 `(tahani/batch/put key value)` adds put values under the key into the batch. `key`
 and `value` must be `string` and can contain `\0` characters. Returns the
-`tahani/batch` on success, so it can be easily chainable.
+`tahani/batch` on success, so it can be easily chained.
 
 This function can also be called as method on `tahani/batch` AbstractType
 `(:put batch key value)`.
@@ -117,7 +117,7 @@ This function can also be called as method on `tahani/batch` AbstractType
 
 `(tahani/batch/delete key)` adds delete the key into the batch. `key` must be
 `string` and can contain `\0` characters. Returns the `tahani/batch` on success,
-so it can be easily chainable.
+so it can be easily chained.
 
 This function can also be called as method on `tahani/batch` AbstractType
 `(:delete batch key)`.
@@ -127,7 +127,7 @@ This function can also be called as method on `tahani/batch` AbstractType
 `(tahani/batch/write batch db)` writes the batch to the database. `db` must be
 instance of `tahani/db` AbstractType returned from the `tahani/open` function
 mentioned above. Returns the `tahani/batch` on success, so it can be easily
-chainable.
+chained.
 
 Panics if any LevelDB error occurs.
 
@@ -203,12 +203,43 @@ This function can also be called as method on `tahani/iterator` AbstractType
 
 #### Moving to the next record in the iterator
 
-`(tahani/iterator/next iterator)` moves the current position in the iterator.
-`iterator` must be instance of `tahani/iterator` returned by the `create` method
-mentioned above. Returns `iterator` so it can be easily chainable.
+`(tahani/iterator/next iterator)` moves the current position in the iterator to
+the next record. `iterator` must be instance of `tahani/iterator` returned by
+the `create` method mentioned above. Returns `iterator` so it can be easily
+chained.
 
 This function can also be called as method on `tahani/iterator` AbstractType
 `(:next iterator)`
+
+#### Seeking first record
+
+`(tahani/iterator/seek-first iterator)` moves the current position in the
+iterator to the first one.`iterator` must be instance of `tahani/iterator`
+returned by the `create` method mentioned above. Returns `iterator` so it can
+be easily chained.
+
+This function can also be called as method on `tahani/iterator` AbstractType
+`(:seek-first iterator)`
+
+#### Seeking last record
+
+`(tahani/iterator/seek-last iterator)` moves the current position in the
+iterator to the last record. `iterator` must be instance of `tahani/iterator`
+returned by the `create` method mentioned above. Returns `iterator` so it can
+be easily chained.
+
+This function can also be called as method on `tahani/iterator` AbstractType
+`(:seek-last iterator)`
+
+#### Seeking record
+
+`(tahani/iterator/seek iterator key)` moves the current position in the
+iterator to the record with `key`. `iterator` must be instance of
+`tahani/iterator` returned by the `create` method mentioned above. `key`must be
+string.  Returns `iterator` so it can be easily chained.
+
+This function can also be called as method on `tahani/iterator` AbstractType
+`(:seek iterator key)`
 
 ## TODOs
 
@@ -217,7 +248,7 @@ This function can also be called as method on `tahani/iterator` AbstractType
 - [x] add snapshot functionality
 - [x] add iterator functions
 - [x] add marshaling/unmarshaling store module
-- [x] make batches chainable
+- [x] make batches chained
 - [x] add batch functions
 - [x] split to more modules
 - [x] add delete function
