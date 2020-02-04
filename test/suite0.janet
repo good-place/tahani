@@ -6,6 +6,7 @@
 
 (def db-name "testdb")
 
+# Basic db operations
 (defer (t/manage/destroy db-name)
   (def d (t/open db-name))
   (assert d "DB is not opened")
@@ -17,12 +18,14 @@
   (:close d)
   (assert (= (string d) "name=testdb state=closed") "Database state is not closed"))
 
+# Open with error_if_exist
 (defer (t/manage/destroy db-name)
   (with [d (t/open db-name :eie)]
     (assert d "DB is not opened with option error if exist")
     (:close d)
     (assert-error "Does not panic with error if exist option" (t/open db-name :eie))))
 
+# Batch operations
 (defer (t/manage/destroy db-name)
   (with [d (t/open db-name)]
     (def b (t/batch/create))
@@ -36,17 +39,20 @@
     (assert (nil? (t/record/get d "HOHOHO")) "Record is not deleted by batch")
     (assert (t/record/get d "HEAT") "Record is not inserted by batch")))
 
+# Repair DB
 (defer (t/manage/destroy db-name)
   (with [_ (t/open db-name)] )
   (assert (first (protect (t/manage/repair db-name))) "DB is not repaired"))
 
+# Snapshot operations
 (defer (t/manage/destroy db-name)
   (with [d (t/open db-name)]
         (def s (t/snapshot/create d))
         (assert s "Snapshot is not created")
         (assert-no-error "Snapshot is not released" (t/snapshot/release s))
-        (assert-no-error (:release (t/snapshot/create d)))))
+        (assert-no-error "Snapshot is not released" (:release s))))
 
+# Iterator operations
 (defer (t/manage/destroy db-name)
   (with [d (t/open db-name)]
         (t/record/put d "HOHOHO" "Santa")
@@ -76,7 +82,7 @@
         (assert si "Iterator with snapshot is not created")
         (:put d "MEAT" "All")
         (:seek-to-last si)
-        (assert (= (:key si) "HOHOHO") "Snapshot Iterator has other last key")
+        (assert (= (:key si) "HOHOHO") "Snapshot Iterator has wrong last key")
         (:release snapshot)
         (:destroy si)))
 

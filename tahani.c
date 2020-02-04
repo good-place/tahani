@@ -35,7 +35,6 @@ typedef struct {
     int flags;
 } Iterator;
 
-/* Close a db, noop if already closed */
 static void closedb(Db *db) {
     if (!(db->flags & FLAG_CLOSED)) {
         db->flags |= FLAG_CLOSED;
