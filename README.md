@@ -25,6 +25,11 @@ right now are Comparator and Filters facilities.
 
 ## Usage
 
+### TLDR
+
+Just open [test suite](test/suite0.janet). If you ever used any key value store 
+and know a little about Janet, you will be at home.
+
 ### Basic database facilities
 
 #### Opening the database
