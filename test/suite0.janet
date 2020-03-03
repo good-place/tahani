@@ -98,9 +98,9 @@
     (assert-error "Can seek last on destroyed iterator" (:seek-to-last i))
     (assert-error "Can next on destroyed iterator" (:next i))
     (assert-error "Can prev on destroyed iterator" (:prev i))
-    (assert-error "Can seek on destroyed iterator" (t/iterator/seek i "HOHOHO"))
-    (assert-error "Can get key on destroyed iterator" (t/iterator/key i))
-    (assert-error "Can get value on destroyed iterator" (t/iterator/value i))
+    (assert-error "Can seek on destroyed iterator" (:seek i "HOHOHO"))
+    (assert-error "Can get key on destroyed iterator" (:key i))
+    (assert-error "Can get value on destroyed iterator" (:value i))
     (:close d)
     (assert-error "Can create iterator from closed db" (t/iterator/create d))))
 
