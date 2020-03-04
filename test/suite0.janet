@@ -67,7 +67,7 @@
     (t/record/put d "HOHOHO" "Santa")
     (t/record/put d "HEAT" "Summer")
     (def i (t/iterator/create d))
-    (assert (= (string i) "state=opened") "Iterator state is not opened")
+    (assert (= (string i) "state=created") "Iterator state is not opened")
     (assert i "Iterator is not created")
     (assert (not (t/iterator/valid? i)) "Iterator is valid before seek")
     (assert-no-error "Iterator does not seek to first" (t/iterator/seek-to-first i))

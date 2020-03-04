@@ -155,8 +155,8 @@ static void printiterator(void *p, JanetBuffer *b) {
     Iterator *iterator = (Iterator *)p;
     char *state;
     switch (iterator->flags) {
-    case FLAG_OPENED:
-        state = "opened";
+    case FLAG_CREATED:
+        state = "created";
         break;
     case FLAG_DESTROYED:
         state = "destroyed";
@@ -228,6 +228,7 @@ static Iterator* inititerator(leveldb_t* db, leveldb_readoptions_t* readoptions)
     leveldb_iterator_t *it = leveldb_create_iterator(db, readoptions);
     Iterator* iterator = (Iterator *) janet_abstract(&AT_iterator, sizeof(Iterator));
     iterator->handle = it;
+    iterator->flags = FLAG_CREATED;
     return iterator;
 }
 
