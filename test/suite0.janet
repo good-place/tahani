@@ -95,6 +95,7 @@
     (assert (= (:key si) "HOHOHO") "Snapshot Iterator has wrong last key")
     (:release snapshot)
     (:destroy si)
+    (assert (= (string i) "state=destroyed") "Iterator state is not destroyed")
     (assert-error "Can seek first on destroyed iterator" (:seek-to-first i))
     (assert-error "Can seek last on destroyed iterator" (:seek-to-last i))
     (assert-error "Can next on destroyed iterator" (:next i))
