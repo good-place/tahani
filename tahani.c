@@ -151,12 +151,38 @@ static const JanetAbstractType AT_snapshot = {
 
 static int iteratorget(void *p, Janet key, Janet *out);
 
+static void printiterator(void *p, JanetBuffer *b) {
+    Iterator *iterator = (Iterator *)p;
+    char *state;
+    switch (iterator->flags) {
+    case FLAG_OPENED:
+        state = "opened";
+        break;
+    case FLAG_DESTROYED:
+        state = "destroyed";
+        break;
+    default:
+        state = "unknown";
+    }
+
+    const int32_t buflen = 6 + strlen(state) + 1;
+    char toprint[buflen];
+    sprintf(toprint, "state=%s", state);
+
+    janet_buffer_push_cstring(b, toprint);
+}
+
 static const JanetAbstractType AT_iterator = {
     "tahani/iterator",
     gciterator,
     NULL,
     iteratorget,
-    JANET_ATEND_GET
+    NULL,
+    NULL,
+    NULL,
+    printiterator,
+    JANET_ATEND_TOSTRING
+
 };
 
 static void paniconerr(char *err) {
