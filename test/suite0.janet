@@ -18,7 +18,7 @@
   (:close d)
   (assert-error "Can put to closed DB" (t/record/put d "yummy" "baba ghamoush"))
   (assert-error "Can get from closed DB" (t/record/get d "yummy"))
-  (assert-error "Can delete to closed DB" (t/record/delete d "yummy"))
+  (assert-error "Can delete from closed DB" (t/record/delete d "yummy"))
   (assert (= (string d) "name=testdb state=closed") "Database state is not closed"))
 
 # Open with error_if_exist
@@ -43,6 +43,8 @@
     (assert (t/record/get d "HEAT") "Record is not inserted by batch")
     (:destroy b)
     (assert-error "Can write destroyed batch" (:write b d))
+    (assert-error "Can put to destroyed batch" (:put b "a" "b"))
+    (assert-error "Can delete from destroyed batch" (:delete b "a"))
     (:close d)
     (assert-error "Can write batch to closed db" (:write b d))))
 
@@ -93,8 +95,9 @@
     (:put d "MEAT" "All")
     (:seek-to-last si)
     (assert (= (:key si) "HOHOHO") "Snapshot Iterator has wrong last key")
-    (:release snapshot)
     (:destroy si)
+    (:release snapshot)
+    (assert-error "Can create iterator from released snapshot" (t/iterator/create d snapshot))
     (assert (= (string i) "state=destroyed") "Iterator state is not destroyed")
     (assert-error "Can seek first on destroyed iterator" (:seek-to-first i))
     (assert-error "Can seek last on destroyed iterator" (:seek-to-last i))
