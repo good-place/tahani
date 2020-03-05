@@ -261,10 +261,14 @@ static Janet cfun_close(int32_t argc, Janet *argv) {
     return janet_wrap_nil();
 }
 
+static void paniconclosed(int flags) {
+    if (flags & FLAG_CLOSED) janet_panic("LevelDB is already closed");
+}
+
 static Janet cfun_record_put(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 3);
     Db *db = janet_getabstract(argv, 0, &AT_db);
-    if (db->flags & FLAG_CLOSED) janet_panic("LevelDB is already closed");
+    paniconclosed(db->flags);
     const char *key = janet_getstring(argv, 1);
     size_t keylen = janet_string_length(key);
     const char *val = janet_getstring(argv, 2);
@@ -280,7 +284,7 @@ static Janet cfun_record_put(int32_t argc, Janet *argv) {
 static Janet cfun_record_get(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 2);
     Db *db = janet_getabstract(argv, 0, &AT_db);
-    if (db->flags & FLAG_CLOSED) janet_panic("LevelDB is already closed");
+    paniconclosed(db->flags);
     const char *key = janet_getstring(argv, 1);
     size_t keylen = janet_string_length(key);
     const char* val;
@@ -302,7 +306,7 @@ static Janet cfun_record_get(int32_t argc, Janet *argv) {
 static Janet cfun_record_delete(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 2);
     Db *db = janet_getabstract(argv, 0, &AT_db);
-    if (db->flags & FLAG_CLOSED) janet_panic("LevelDB is already closed");
+    paniconclosed(db->flags);
     const char *key = janet_getstring(argv, 1);
     size_t keylen = janet_string_length(key);
     null_err;
@@ -371,7 +375,7 @@ static Janet cfun_batch_destroy(int32_t argc, Janet *argv) {
 static Janet cfun_batch_write(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 2);
     Db *db = janet_getabstract(argv, 1, &AT_db);
-    if (db->flags & FLAG_CLOSED) janet_panic("LevelDB is already closed");
+    paniconclosed(db->flags);
     Batch *batch = janet_getabstract(argv, 0, &AT_batch);
     if (batch->flags & FLAG_DESTROYED) janet_panic("Batch is already destroyed");
     null_err;
@@ -425,7 +429,7 @@ static int batchget(void *p, Janet key, Janet *out) {
 static Janet cfun_snapshot_create(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 1);
     Db *db = janet_getabstract(argv, 0, &AT_db);
-    if (db->flags & FLAG_CLOSED) janet_panic("LevelDB is already closed");
+    paniconclosed(db->flags);
     Snapshot *snapshot = initsnapshot(db->handle);
 
     return janet_wrap_abstract(snapshot);
@@ -454,7 +458,7 @@ static int snapshotget(void *p, Janet key, Janet *out) {
 static Janet cfun_iterator_create(int32_t argc, Janet *argv) {
     janet_arity(argc, 1, 2);
     Db *db = janet_getabstract(argv, 0, &AT_db);
-    if (db->flags & FLAG_CLOSED) janet_panic("LevelDB is already closed");
+    paniconclosed(db->flags);
     leveldb_readoptions_t* readoptions = leveldb_readoptions_create();
     leveldb_readoptions_set_fill_cache(readoptions, 0);
     if (argc == 2) {
@@ -474,11 +478,14 @@ static Janet cfun_iterator_valid(int32_t argc, Janet *argv) {
     return janet_wrap_boolean(leveldb_iter_valid(iterator->handle));
 }
 
+static void panicondestroyed(int flags) {
+    if (flags & FLAG_DESTROYED) janet_panic("Iterator is already destroyed");
+}
+
 static Janet cfun_iterator_seek_to_first(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 1);
     Iterator *iterator = janet_getabstract(argv, 0, &AT_iterator);
-    if (iterator->flags & FLAG_DESTROYED) janet_panic("Iterator is already destroyed");
-
+    panicondestroyed(iterator->flags);
     leveldb_iter_seek_to_first(iterator->handle);
 
     return janet_wrap_abstract(iterator);
@@ -487,7 +494,7 @@ static Janet cfun_iterator_seek_to_first(int32_t argc, Janet *argv) {
 static Janet cfun_iterator_seek_to_last(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 1);
     Iterator *iterator = janet_getabstract(argv, 0, &AT_iterator);
-    if (iterator->flags & FLAG_DESTROYED) janet_panic("Iterator is already destroyed");
+    panicondestroyed(iterator->flags);
 
     leveldb_iter_seek_to_last(iterator->handle);
 
@@ -497,7 +504,7 @@ static Janet cfun_iterator_seek_to_last(int32_t argc, Janet *argv) {
 static Janet cfun_iterator_next(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 1);
     Iterator *iterator = janet_getabstract(argv, 0, &AT_iterator);
-    if (iterator->flags & FLAG_DESTROYED) janet_panic("Iterator is already destroyed");
+    panicondestroyed(iterator->flags);
 
     leveldb_iter_next(iterator->handle);
 
@@ -507,7 +514,7 @@ static Janet cfun_iterator_next(int32_t argc, Janet *argv) {
 static Janet cfun_iterator_prev(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 1);
     Iterator *iterator = janet_getabstract(argv, 0, &AT_iterator);
-    if (iterator->flags & FLAG_DESTROYED) janet_panic("Iterator is already destroyed");
+    panicondestroyed(iterator->flags);
 
     leveldb_iter_prev(iterator->handle);
 
@@ -517,7 +524,7 @@ static Janet cfun_iterator_prev(int32_t argc, Janet *argv) {
 static Janet cfun_iterator_seek(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 2);
     Iterator *iterator = janet_getabstract(argv, 0, &AT_iterator);
-    if (iterator->flags & FLAG_DESTROYED) janet_panic("Iterator is already destroyed");
+    panicondestroyed(iterator->flags);
     const char *key = janet_getstring(argv, 1);
     size_t keylen = janet_string_length(key);
 
@@ -529,7 +536,7 @@ static Janet cfun_iterator_seek(int32_t argc, Janet *argv) {
 static Janet cfun_iterator_key(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 1);
     Iterator *iterator = janet_getabstract(argv, 0, &AT_iterator);
-    if (iterator->flags & FLAG_DESTROYED) janet_panic("Iterator is already destroyed");
+    panicondestroyed(iterator->flags);
     size_t keylen;
     const char* key = leveldb_iter_key(iterator->handle, &keylen);
     Janet res = janet_stringv((uint8_t *) key, keylen);
@@ -539,7 +546,7 @@ static Janet cfun_iterator_key(int32_t argc, Janet *argv) {
 static Janet cfun_iterator_value(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 1);
     Iterator *iterator = janet_getabstract(argv, 0, &AT_iterator);
-    if (iterator->flags & FLAG_DESTROYED) janet_panic("Iterator is already destroyed");
+    panicondestroyed(iterator->flags);
     size_t vallen;
     const char* value = leveldb_iter_value(iterator->handle, &vallen);
     Janet res = janet_stringv((uint8_t *) value, vallen);
