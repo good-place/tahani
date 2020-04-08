@@ -1,13 +1,11 @@
 (declare-project
   :name "tahani"
+  :author "Josef Pospíšil"
+  :repo "git+https://github.com/good-place/tahani.git"
   :description "LevelDB wrapper for Janet"
   :dependencies ["https://github.com/janet-lang/jhydro.git"])
 
 (declare-native
  :name "tahani"
- :cflags ["-Ileveldb/db"]
- :lflags ["-lleveldb"]
+ :cflags ["-Ileveldb/include"]
  :source @["tahani.c"])
-
-# run repl with tahani included
-(phony "repl" ["build"] (os/execute ["janet" "-r" "-e" "(import build/tahani :as t)"] :p))
