@@ -1,7 +1,7 @@
 #include <janet.h>
 #include <string.h>
 
-#include "leveldb/c.h"
+#include <leveldb/c.h>
 
 #define FLAG_OPENED 0
 #define FLAG_CLOSED 1

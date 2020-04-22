@@ -7,5 +7,5 @@
 
 (declare-native
  :name "tahani"
- :cflags ["-Ileveldb/include"]
+ :lflags ["-lleveldb"]
  :source @["tahani.c"])
