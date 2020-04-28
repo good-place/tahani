@@ -589,7 +589,7 @@ static int iteratorget(void *p, Janet key, Janet *out) {
 }
 
 static const JanetReg db_cfuns[] = {
-    {"open", cfun_open, "(tahani/open name &opt options)\n\nOpens a level DB connection with the name. A name must be a string. Only option is :eie which sets error_if_exists. Option create_if_missing is implicit. "},
+    {"open", cfun_open, "(tahani/open name &opt options)\n\nOpens a level DB connection with the name. A name must be a string. Option :eie sets error_if_exists. Option :eim disables implicit create_if_missing. "},
     {"close", cfun_close, "(tahani/close db)\n\nCloses a level DB connection. A db must be a tahani/db."},
     {NULL, NULL, NULL}
 };

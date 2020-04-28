@@ -27,7 +27,7 @@ right now are Comparator and Filters facilities.
 
 ### TLDR
 
-Just open [test suite](test/suite0.janet). If you ever used any key value store 
+Just open [test suite](test/suite0.janet). If you ever used any key value store
 and know a little about Janet, you will be at home.
 
 ### Basic database facilities
@@ -36,8 +36,9 @@ and know a little about Janet, you will be at home.
 
 `(tahani/open db-name &opt opts)` opens the LevelDB database. `db-name` must
 be the `string` same as the directory name, where database resides on the disk.
-Optional `opts` have only one defined value `:eie` for setting `error_if_exists`
-LevelDB option. Function returns Janet AbstractType `tahani/db`. This
+Optional `opts` can have value `:eie` for setting `error_if_exists`
+LevelDB option. Value `:eim` unsets implicit `create_if_missing`.
+Function returns Janet AbstractType `tahani/db`. This
 AbstractType instance is used as a parameter when calling most of the API.
 
 Panics if any LevelDB error occurs.
