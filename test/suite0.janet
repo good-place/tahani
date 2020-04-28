@@ -28,6 +28,10 @@
     (:close d)
     (assert-error "Does not panic with error if exist option" (t/open db-name :eie))))
 
+# Open with error_if_missing
+(defer (t/manage/destroy db-name)
+  (assert-error "Does not panic with error if missing option" (t/open db-name :eim)))
+
 # Batch operations
 (defer (t/manage/destroy db-name)
   (with [d (t/open db-name)]

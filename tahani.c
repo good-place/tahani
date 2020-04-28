@@ -234,22 +234,24 @@ static Iterator* inititerator(leveldb_t* db, leveldb_readoptions_t* readoptions)
 
 static Janet cfun_open(int32_t argc, Janet *argv) {
     janet_arity(argc, 1, 2);
-    const char *name = janet_getstring(argv, 0);
+    const unsigned char *name = janet_getstring(argv, 0);
     leveldb_options_t *options = leveldb_options_create();
     leveldb_options_set_create_if_missing(options, 1);
     if (argc == 2) {
         const uint8_t *opt = janet_getkeyword(argv, 1);
-        if (strcmp(opt, "eie") == 0) {
+        if (strcmp((const char *) opt, "eie") == 0) {
             leveldb_options_set_error_if_exists(options, 1);
+        } else if (strcmp((const char *) opt, "eim") == 0) {
+				    leveldb_options_set_create_if_missing(options, 0);
         } else {
             janet_panic("Unrecognized option");
         }
     }
     null_err;
-    leveldb_t *conn = leveldb_open(options, name, &err);
+    leveldb_t *conn = leveldb_open(options, (const char *) name, &err);
     paniconerr(err);
 
-    Db *db = initdb(name, conn, options);
+    Db *db = initdb((const char *) name, conn, options);
 
     return janet_wrap_abstract(db);
 }
@@ -269,13 +271,13 @@ static Janet cfun_record_put(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 3);
     Db *db = janet_getabstract(argv, 0, &AT_db);
     paniconclosed(db->flags);
-    const char *key = janet_getstring(argv, 1);
+    const uint8_t *key = janet_getstring(argv, 1);
     size_t keylen = janet_string_length(key);
-    const char *val = janet_getstring(argv, 2);
+    const uint8_t *val = janet_getstring(argv, 2);
     size_t vallen = janet_string_length(val);
     null_err;
 
-    leveldb_put(db->handle, db->writeoptions, key, keylen, val, vallen, &err);
+    leveldb_put(db->handle, db->writeoptions, (const char *) key, keylen, (const char *) val, vallen, &err);
     paniconerr(err);
 
     return janet_wrap_nil();
@@ -285,13 +287,13 @@ static Janet cfun_record_get(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 2);
     Db *db = janet_getabstract(argv, 0, &AT_db);
     paniconclosed(db->flags);
-    const char *key = janet_getstring(argv, 1);
+    const uint8_t *key = janet_getstring(argv, 1);
     size_t keylen = janet_string_length(key);
-    const char* val;
+    const char *val;
     size_t vallen;
     null_err;
 
-    val = leveldb_get(db->handle, db->readoptions, key, keylen, &vallen, &err);
+    val = leveldb_get(db->handle, db->readoptions, (const char *) key, keylen, &vallen, &err);
     paniconerr(err);
 
     if (val == NULL) {
@@ -307,11 +309,11 @@ static Janet cfun_record_delete(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 2);
     Db *db = janet_getabstract(argv, 0, &AT_db);
     paniconclosed(db->flags);
-    const char *key = janet_getstring(argv, 1);
+    const uint8_t *key = janet_getstring(argv, 1);
     size_t keylen = janet_string_length(key);
     null_err;
 
-    leveldb_delete(db->handle, db->writeoptions, key, keylen, &err);
+    leveldb_delete(db->handle, db->writeoptions, (const char *) key, keylen, &err);
     paniconerr(err);
 
     return janet_wrap_nil();
@@ -334,11 +336,11 @@ static int dbget(void *p, Janet key, Janet *out) {
 
 static Janet cfun_destroy(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 1);
-    const char *name = janet_getstring(argv, 0);
+    const uint8_t *name = janet_getstring(argv, 0);
     null_err;
 
     leveldb_options_t *options = leveldb_options_create();
-    leveldb_destroy_db(options, name, &err);
+    leveldb_destroy_db(options, (const char *) name, &err);
     paniconerr(err);
 
     return janet_wrap_nil();
@@ -346,11 +348,11 @@ static Janet cfun_destroy(int32_t argc, Janet *argv) {
 
 static Janet cfun_repair(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 1);
-    const char *name = janet_getstring(argv, 0);
+    const uint8_t *name = janet_getstring(argv, 0);
     null_err;
 
     leveldb_options_t *options = leveldb_options_create();
-    leveldb_repair_db(options, name, &err);
+    leveldb_repair_db(options, (const char *) name, &err);
     paniconerr(err);
 
     return janet_wrap_nil();
@@ -393,13 +395,12 @@ static Janet cfun_batch_put(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 3);
     Batch *batch = janet_getabstract(argv, 0, &AT_batch);
     paniconbdestroyed(batch->flags);
-    const char *key = janet_getstring(argv, 1);
+    const uint8_t *key = janet_getstring(argv, 1);
     size_t keylen = janet_string_length(key);
-    const char *val = janet_getstring(argv, 2);
+    const uint8_t *val = janet_getstring(argv, 2);
     size_t vallen = janet_string_length(val);
-    null_err;
 
-    leveldb_writebatch_put(batch->handle, key, keylen, val, vallen);
+    leveldb_writebatch_put(batch->handle, (const char *) key, keylen, (const char *) val, vallen);
 
     return janet_wrap_abstract(batch);
 }
@@ -408,11 +409,10 @@ static Janet cfun_batch_delete(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 2);
     Batch *batch = janet_getabstract(argv, 0, &AT_batch);
     paniconbdestroyed(batch->flags);
-    const char *key = janet_getstring(argv, 1);
+    const uint8_t *key = janet_getstring(argv, 1);
     size_t keylen = janet_string_length(key);
-    null_err;
 
-    leveldb_writebatch_delete(batch->handle, key, keylen);
+    leveldb_writebatch_delete(batch->handle, (const char *) key, keylen);
 
     return janet_wrap_abstract(batch);
 }
@@ -532,10 +532,10 @@ static Janet cfun_iterator_seek(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 2);
     Iterator *iterator = janet_getabstract(argv, 0, &AT_iterator);
     paniconidestroyed(iterator->flags);
-    const char *key = janet_getstring(argv, 1);
+    const uint8_t *key = janet_getstring(argv, 1);
     size_t keylen = janet_string_length(key);
 
-    leveldb_iter_seek(iterator->handle, key, keylen);
+    leveldb_iter_seek(iterator->handle, (const char *) key, keylen);
 
     return janet_wrap_abstract(iterator);
 }
