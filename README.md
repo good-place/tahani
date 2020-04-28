@@ -264,7 +264,7 @@ You can call his function as a method on `tahani/iterator` AbstractType
 
 ## TODOs
 
-- [  ] @todo add open, read and write optional options
+- [x] @todo add open, read and write optional options
 - [x] split store to mansion
 - [x] add snapshot functionality
 - [x] add iterator functions
