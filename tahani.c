@@ -319,21 +319,6 @@ static Janet cfun_record_delete(int32_t argc, Janet *argv) {
     return janet_wrap_nil();
 }
 
-static JanetMethod db_methods[] = {
-    {"close", cfun_close},
-    {"get", cfun_record_get},
-    {"put", cfun_record_put},
-    {"delete", cfun_record_delete},
-    {NULL, NULL}
-};
-
-static int dbget(void *p, Janet key, Janet *out) {
-    (void) p;
-    if (!janet_checktype(key, JANET_KEYWORD))
-        return 0;
-    return janet_getmethod(janet_unwrap_keyword(key), db_methods, out);
-}
-
 static Janet cfun_destroy(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 1);
     const uint8_t *name = janet_getstring(argv, 0);
@@ -415,21 +400,6 @@ static Janet cfun_batch_delete(int32_t argc, Janet *argv) {
     leveldb_writebatch_delete(batch->handle, (const char *) key, keylen);
 
     return janet_wrap_abstract(batch);
-}
-
-static JanetMethod batch_methods[] = {
-    {"write", cfun_batch_write},
-    {"put", cfun_batch_put},
-    {"delete", cfun_batch_delete},
-    {"destroy", cfun_batch_destroy},
-    {NULL, NULL}
-};
-
-static int batchget(void *p, Janet key, Janet *out) {
-    (void) p;
-    if (!janet_checktype(key, JANET_KEYWORD))
-        return 0;
-    return janet_getmethod(janet_unwrap_keyword(key), batch_methods, out);
 }
 
 static Janet cfun_snapshot_create(int32_t argc, Janet *argv) {
@@ -573,6 +543,38 @@ static Janet cfun_iterator_destroy(int32_t argc, Janet *argv) {
 
     destroyiterator(iterator);
     return janet_wrap_nil();
+}
+
+static JanetMethod db_methods[] = {
+    {"close", cfun_close},
+    {"get", cfun_record_get},
+    {"put", cfun_record_put},
+    {"delete", cfun_record_delete},
+    {"iterator", cfun_iterator_create},
+    {"snapshot", cfun_snapshot_create},
+    {NULL, NULL}
+};
+
+static int dbget(void *p, Janet key, Janet *out) {
+    (void) p;
+    if (!janet_checktype(key, JANET_KEYWORD))
+        return 0;
+    return janet_getmethod(janet_unwrap_keyword(key), db_methods, out);
+}
+
+static JanetMethod batch_methods[] = {
+    {"write", cfun_batch_write},
+    {"put", cfun_batch_put},
+    {"delete", cfun_batch_delete},
+    {"destroy", cfun_batch_destroy},
+    {NULL, NULL}
+};
+
+static int batchget(void *p, Janet key, Janet *out) {
+    (void) p;
+    if (!janet_checktype(key, JANET_KEYWORD))
+        return 0;
+    return janet_getmethod(janet_unwrap_keyword(key), batch_methods, out);
 }
 
 static JanetMethod iterator_methods[] = {
