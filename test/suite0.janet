@@ -39,10 +39,9 @@
     (assert b "Batch is not created")
     (t/record/put d "HOHOHO" "Santa")
     (-> b
-      (:put "HEAT" "Summer")
-      (:delete "HOHOHO")
-      (:write d)
-      )
+        (:put "HEAT" "Summer")
+        (:delete "HOHOHO")
+        (:write d))
     (assert (nil? (t/record/get d "HOHOHO")) "Record is not deleted by batch")
     (assert (t/record/get d "HEAT") "Record is not inserted by batch")
     (:destroy b)
@@ -54,7 +53,7 @@
 
 # Repair DB
 (defer (t/manage/destroy db-name)
-  (with [_ (t/open db-name)] )
+  (:close (t/open db-name))
   (assert (first (protect (t/manage/repair db-name))) "DB is not repaired"))
 
 # Snapshot operations
@@ -73,7 +72,7 @@
     (t/record/put d "HOHOHO" "Santa")
     (t/record/put d "HEAT" "Summer")
     (def i (t/iterator/create d))
-    (assert (= (string i) "state=created") "Iterator state is not opened")
+    (assert (= (string i) "state=created") "Iterator state is not created")
     (assert i "Iterator is not created")
     (assert (not (t/iterator/valid? i)) "Iterator is valid before seek")
     (assert-no-error "Iterator does not seek to first" (t/iterator/seek-to-first i))

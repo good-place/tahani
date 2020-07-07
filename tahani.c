@@ -242,7 +242,7 @@ static Janet cfun_open(int32_t argc, Janet *argv) {
         if (strcmp((const char *) opt, "eie") == 0) {
             leveldb_options_set_error_if_exists(options, 1);
         } else if (strcmp((const char *) opt, "eim") == 0) {
-				    leveldb_options_set_create_if_missing(options, 0);
+            leveldb_options_set_create_if_missing(options, 0);
         } else {
             janet_panic("Unrecognized option");
         }
@@ -489,6 +489,11 @@ static void paniconidestroyed(int flags) {
     if (flags & FLAG_DESTROYED) janet_panic("Iterator is already destroyed");
 }
 
+static void paniconinvalid(Iterator *iterator) {
+    if (!leveldb_iter_valid(iterator->handle))
+        janet_panic("Iterator is not valid!");
+}
+
 static Janet cfun_iterator_seek_to_first(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 1);
     Iterator *iterator = janet_getabstract(argv, 0, &AT_iterator);
@@ -512,6 +517,7 @@ static Janet cfun_iterator_next(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 1);
     Iterator *iterator = janet_getabstract(argv, 0, &AT_iterator);
     paniconidestroyed(iterator->flags);
+    paniconinvalid(iterator);
 
     leveldb_iter_next(iterator->handle);
 
@@ -522,6 +528,7 @@ static Janet cfun_iterator_prev(int32_t argc, Janet *argv) {
     janet_fixarity(argc, 1);
     Iterator *iterator = janet_getabstract(argv, 0, &AT_iterator);
     paniconidestroyed(iterator->flags);
+    paniconinvalid(iterator);
 
     leveldb_iter_prev(iterator->handle);
 

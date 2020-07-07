@@ -6,6 +6,6 @@
   :dependencies ["https://github.com/janet-lang/jhydro.git"])
 
 (declare-native
- :name "tahani"
- :lflags ["-lleveldb"]
- :source @["tahani.c"])
+  :name "tahani"
+  :lflags ["-lleveldb"]
+  :source @["tahani.c"])
