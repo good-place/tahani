@@ -48,7 +48,6 @@
     (assert-error "Can write destroyed batch" (:write b d))
     (assert-error "Can put to destroyed batch" (:put b "a" "b"))
     (assert-error "Can delete from destroyed batch" (:delete b "a"))
-    (assert (:batch d) "Cannot create snapshot from method")
     (:close d)
     (assert-error "Can write batch to closed db" (:write b d))))
 
@@ -64,6 +63,9 @@
     (assert s "Snapshot is not created")
     (assert-no-error "Snapshot is not released" (t/snapshot/release s))
     (assert-no-error "Snapshot is not released" (:release s))
+    (def ds (:snapshot d))
+    (assert ds "Cannot create snapshot from method")
+    (:release ds)
     (:close d)
     (assert-error "Can create snapshot from closed db" (t/snapshot/create d))))
 
