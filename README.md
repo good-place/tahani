@@ -171,13 +171,15 @@ bellow.
 instance of `tahani/db` AbstractType returned from the `tahani/open` function
 mentioned above. Returns `tahani/snapshot` Janet AbstractType.
 
+Snapshot can also be created with `tahani/db` AbstractType method `(:snapshot db)`.
+
 #### Releasing the snapshot
 
 `(tahani/snapshot/release snapshot)` releases the snapshot. `snapshot` must be
 instance of `tahani/snapshot` AbstractType.
 
-You can call his function as a method on `tahani/iterator` AbstractType
-`(:release batch)`.
+You can call his function as a method on `tahani/snapshot` AbstractType
+`(:release snapshot)`.
 
 ### Iterator facilities
 
@@ -189,8 +191,9 @@ Iterators are the primary tool for traversing snapshot of the database.
 an instance of `tahani/db` AbstractType returned from the `tahani/open` function
 mentioned above. Optional `snapshot` must be an instance of `tahani/snapshot`
 AbstractType, when you do not provide one, an implicit snapshot is created.
-Returns
-`tahani/snapshot` Janet AbstractType.
+Returns `tahani/snapshot` Janet AbstractType.
+
+Iterator can also be created with `tahani/db` iteratormethod `(:iterator db)`.
 
 #### Checking the iterator validity
 
@@ -199,7 +202,7 @@ state. `iterator` must be an instance of `tahani/iterator` returned by the
 `create` method mentioned above. Returns true when the iterator is in the valid
 state.
 
-You can call his function as a method on `tahani/iterator` AbstractType
+You can call this function as a method on `tahani/iterator` AbstractType
 `(:valid? iterator)`
 
 #### Getting current iterator position key
