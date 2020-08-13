@@ -48,7 +48,7 @@
     (assert-error "Can write destroyed batch" (:write b d))
     (assert-error "Can put to destroyed batch" (:put b "a" "b"))
     (assert-error "Can delete from destroyed batch" (:delete b "a"))
-    (assert (:snapshot d) "Cannot create snapshot from method")
+    (assert (:batch d) "Cannot create snapshot from method")
     (:close d)
     (assert-error "Can write batch to closed db" (:write b d))))
 
@@ -110,7 +110,9 @@
     (assert-error "Can seek on destroyed iterator" (:seek i "HOHOHO"))
     (assert-error "Can get key on destroyed iterator" (:key i))
     (assert-error "Can get value on destroyed iterator" (:value i))
-    (assert (:iterator d) "Cannot create terator from method")
+    (def di (:iterator d))
+    (assert di "Cannot create terator by db method")
+    (:destroy di)
     (:close d)
     (assert-error "Can create iterator from closed db" (t/iterator/create d))))
 
